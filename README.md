@@ -48,15 +48,15 @@ The outpus are to stdout. For example:
 ```
 $ python3 ../photomass/photomass_ls.py  NGC4656 4 --galpath ../ --local
 galaxy: NGC4656
-coordinates: 
+RA,Dec =  
 log(M*[Msum]) = 9.247399396604427
 Ext: g : 0.043 r : 0.029
 Mag: g : -18.493440451964197 r : -18.680040451964196
-Sersic: g : 1.1615 r : 1.1101
+Sersic index: g : 1.1615 r : 1.1101
 R_e[px]: g : 439.2828 r : 420.0659
 R_e[arcsec]: g : 115.09209360000001 r : 110.05726580000001
 Axis ratio: g : 0.1761 r : 0.1885
-Distance: 9.315541188290236 Mpc
+Distance[Mpc]: 9.315541188290236
 redshift: 0.002155
 ```
 Where M[Sun] is mass estimate in Sun masses, 
