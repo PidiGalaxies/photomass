@@ -2,7 +2,7 @@
 
 ## Requirements 
 
-galfit : https://users.obs.carnegiescience.edu/peng/work/galfit/galfit.html
+GALFIT : https://users.obs.carnegiescience.edu/peng/work/galfit/galfit.html
 
 python libraries:
 requests, numpy, scipy, SEP, astropy, matplotlib (with option --plot)
@@ -70,7 +70,7 @@ Axis ratio: g : 0.1761 r : 0.1885
 Distance[Mpc]: 9.315541188290236
 redshift: 0.002155
 ```
-where Msun are units of Sun masses, and log(M*[Msun]) is the estimate of the logarithm of the galaxy stellar mass.
+where and log(M*[Msun]) is the estimate of the logarithm of the galaxy stellar mass computed by Eq(1) of Ebrova et al. (2025), and Msun are units of Sun masses.
  
 These variables are calculated for different filters:
  - `Ext`: Galactic extinctions in DES filters from Schlafly & Finkbeiner (2011) using NASA/IPAC Extragalactic Database (NED)
