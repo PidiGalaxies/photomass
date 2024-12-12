@@ -47,7 +47,9 @@ options:
 The outpus are to stdout. For example:
 ```
 $ python3 ../photomass/photomass_ls.py  NGC4656 4 --galpath ../ --local
-M[Sun] = 9.247399396604427
+galaxy: NGC4656
+coordinates: 
+log(M*[Msum]) = 9.247399396604427
 Ext: g : 0.043 r : 0.029
 Mag: g : -18.493440451964197 r : -18.680040451964196
 Sersic: g : 1.1615 r : 1.1101
