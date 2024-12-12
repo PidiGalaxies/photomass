@@ -52,7 +52,7 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   --refetch             re-download and re-analyse image even if a local copy exists
-  --galpath GALPATH     path to galfit64 binary. If not set, $PATH is searched
+  --galpath GALPATH     path to galfit64 binary; if not set, $PATH is searched
   --dist DIST           galaxy distance in Mcp
   --additional-filters ADDITIONAL_FILTERS
                         other filters without delimiter
@@ -80,7 +80,7 @@ Redshift: 0.007722
 where and log(M*[Msun]) is the estimate of the logarithm of the galaxy stellar mass computed by Eq(1) of Ebrova et al. (2025), and Msun is the sollar masses.
  
 These variables are calculated for different filters:
- - `Ext`: galactic extinctions in DES filters from Schlafly & Finkbeiner (2011) using NASA/IPAC Extragalactic Database (NED)
+ - `Ext`: Galactic extinctions in DES filters from Schlafly & Finkbeiner (2011) using NASA/IPAC Extragalactic Database (NED)
  - `Mag`: extinction-correlated absolute magnitude calculated from the galaxy distance and the GLAFIT Integrated magnitude
  - `Sersic index`: Sersic index of the GALFIT model
  - `R_e`: effective radius of the GALFIT model - in pixels and arcsec
