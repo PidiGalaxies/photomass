@@ -1,5 +1,20 @@
 # photmass_ls.py
 
+
+## About the script
+
+photomass computes an estimate of the stellar mass for a given galaxy based on a photometry performed by GALFIT on g & r band data from DESI Legacy Imaging Surveys. The script automatically downloads images of the galaxy from the Legacy Surveys (DR10) database, create image masks, generate GALFIT
+input files with well-assessed initial values, perform the GALFIT photometry, and calculate the stellar mass estimate. More details are given in Ebrová, Bílek, & Eliasek (2025).
+
+
+## Citation 
+
+If you use this code in your research or projects, please cite the following accompanied paper:
+
+Ebrova, Bilek, & Eliasek: "Photometric stellar masses for galaxies in DESI Legacy Imaging
+Surveys" (2025; submitted)
+
+
 ## Requirements 
 
 GALFIT : https://users.obs.carnegiescience.edu/peng/work/galfit/galfit.html
@@ -16,16 +31,6 @@ pip3 install "numpy<2.0" scipy SEP astropy requests
 ```
 
 > SEP 1.2.1 does not work with numpy 2.0 or newer
-
-
-## Citation 
-
-If you use this code in your research or projects, please cite the following accompanied paper:
-
-Ebrova, Bilek, & Eliasek: "Photometric stellar masses for galaxies in DESI Legacy Imaging
-Surveys" (2025; submitted)
-
-This paper contains detailed description of the procedures and motivations behind the script.
 
 
 ## Limitations
