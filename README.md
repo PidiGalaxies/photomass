@@ -38,7 +38,7 @@ The script uses [NED](ned.ipac.caltech.edu) and [`get_icrs_coordinates` from `as
 If the object is not present in these databases corresponding exception will be raised.
 
 
-## Running script
+## Running the script
 You can use `python3 photomass_ls.py` to get usage:
 ```
 usage: photomass_ls.py [-h] [--overwrite] [--local] [--galpath GALPATH] [--dist DIST] [--additional-filters ADDITIONAL_FILTERS] [--plot] OBJECT radius
@@ -75,7 +75,7 @@ Axis ratio: g : 0.1761 r : 0.1885
 Distance[Mpc]: 9.315541188290236
 redshift: 0.002155
 ```
-where and log(M*[Msun]) is the estimate of the logarithm of the galaxy stellar mass computed by Eq(1) of Ebrova et al. (2025), and Msun are units of Sun masses.
+where and log(M*[Msun]) is the estimate of the logarithm of the galaxy stellar mass computed by Eq(1) of Ebrova et al. (2025), and Msun is the sollar masses.
  
 These variables are calculated for different filters:
  - `Ext`: Galactic extinctions in DES filters from Schlafly & Finkbeiner (2011) using NASA/IPAC Extragalactic Database (NED)
@@ -96,3 +96,7 @@ The script also saves these files:
  - fits outputted from galfit: `<object_name>_<filter>_out.fits`
  - input for galfit: `<object_name>_<filter>_gal.inp`
  - output from galfit: `<object_name>_<filter>.galfit`
+
+## Acknowledgements
+
+This project has received funding from the European Union's Horizon Europe Research and Innovation programme under the Marie Skłodowska-Curie grant agreement No. 101067618, GalaxyMergers.
