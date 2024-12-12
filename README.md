@@ -90,12 +90,12 @@ These variables are calculated for different filters:
 
 
 The script also saves these files:
- - downloaded FISTS - with file name : `<object_name>_<downsize>_<size>px_ls-dr10_<filters>.fits`
- - fits with only one filter data: `<object_name>_<filter>.fit`
- - fits with mask for one filter data: `<object_name>_<filter>_mask.fit`
- - fits outputted from GALFIT: `<object_name>_<filter>_out.fits`
- - input for GALFIT: `<object_name>_<filter>_gal.inp`
- - output from GALFIT: `<object_name>_<filter>.galfit`
+ - downloaded FITS - with file name : `<object_name>_<downsize>_<size>px_ls-dr10_<filters>.fits`
+ - single-filter data: `<object_name>_<filter>.fit`
+ - image mask for the respective filter: `<object_name>_<filter>_mask.fit`
+ - input file for GALFIT: `<object_name>_<filter>_gal.inp`
+ - GALFIT FITS image output: `<object_name>_<filter>_out.fits`
+ - GALFIT ASCII text file output: `<object_name>_<filter>.galfit`
 
 ## Acknowledgements
 
