@@ -1,5 +1,3 @@
-#import requests
-#from numpy import *
 import numpy as np
 import astropy.io.fits as fits
 from astropy import units as u
@@ -57,27 +55,28 @@ import sys
 import os
 from argparse import ArgumentParser
 
-parser = ArgumentParser(description="Calculates things from other things!")
-parser.add_argument("OBJECT", help="Name of the object for which to calculate things.")
-parser.add_argument("radius", help="Semi-majir axis[arcsec] at level {mu}(3.6um)=25.5mag(AB)/arcsec^2^[ucd=phys.angSize.smajAxis].", type=float)
-parser.add_argument("--overwrite", help="If set the fits will be redownloaded and analysis redone - otherwise nothing will be done.", action="store_true")
-parser.add_argument("--local", help="use local file if it exists", action="store_true")
-parser.add_argument("--galpath", help="Path to galfit64 binary. It should be in $PATH if not set.", action="store", default="")
-parser.add_argument("--dist", help="Distance in Mcp", action="store", default=None)
-parser.add_argument("--additional-filters", help="Other filters without delimiter", action="store", default='')
-parser.add_argument("--plot", help="Plot png image of source data and masked data", action="store_true")
+parser = ArgumentParser(description="computes a stellar mass estimate for a given galaxy based on GALFIT photometry with Legacy Surveys data")
+parser.add_argument("OBJECT", help="name of the galaxy for which the stellar mass estimate is done")
+parser.add_argument("radius", help="approximate galaxy angular size in arcseconds (e.g. semi-major axis at SB=25.5mag/arcsec^2 in the Spitzer 3.6 micron filter)", type=float)
+parser.add_argument("--refetch", help="re-download and re-analyse image even if a local copy exists", action="store_true")
+parser.add_argument("--galpath", help="path to galfit64 binary. If not set, $PATH is searched", action="store", default="")
+parser.add_argument("--dist", help="galaxy distance in Mcp", action="store", default=None)
+parser.add_argument("--additional-filters", help="other filters without delimiter", action="store", default='')
+parser.add_argument("--plot", help="plot png image of source data and masked data", action="store_true")
 
 args = parser.parse_args()
 filters = ['g', 'r']  + list(args.additional_filters)
-obj_name =  args.OBJECT #'ngc4993'
+obj_name =  args.OBJECT.upper() # Convert everything to upper case to avoid data duplication
 
 ned = harvest_ned(obj_name)
 if args.dist is None:
     from astropy.cosmology import WMAP9
     dist = WMAP9.comoving_distance(ned['redshift']).value #distance in Mpc
+    dist_type = '(from redshift)'
 else:
     dist = float(args.dist)
-obj_r =  args.radius # amaj(arcsec) Semi-major axis at level {mu}(3.6um)=25.5mag(AB)/arcsec^2^[ucd=phys.angSize.smajAxis]
+    dist_type = '(from input)'
+obj_r =  args.radius # e.g. amaj(arcsec) Semi-major axis at level {mu}(3.6um)=25.5mag(AB)/arcsec^2^[ucd=phys.angSize.smajAxis]
 r_fac = 2.5
 ls_scale = 0.262 #LS default plate scale 0.262 arcsec/pixel
 wpx = 1024 # The maximum size for cutouts (in number of pixels) is currently 512 # currently more!!    
@@ -91,22 +90,19 @@ center = get_icrs_coordinates(obj_name)
 
 file_name = obj_name +'_' + str(downsize) + '_' + str(wpx) + 'px_' + 'ls-dr10_' + "".join(filters) +  '.fits'
 
-if os.path.isfile(file_name) and args.local:
-    pass
-elif os.path.isfile(file_name) and not args.overwrite:
-    print("File", file_name, "already exists!")
-    print("If you want do download it and do the analysis again, please add option --overwrite or use already downloaded file with --local")
-    sys.exit(0)
-else:
+if not os.path.isfile(file_name) or args.refetch:
     im_fits = get_image_fits(center.ra.value, center.dec.value, wpx, downsize=downsize, LSversion = 'ls-dr10', bands = "".join(filters))
     im_fits.writeto(file_name, overwrite=True)  # save / overwrite galaxy image
     im_fits.close()
+else:
+    print('Using existing FITS from the local directory')
 
-magnitudes = {}
-Ser_index  = {}
-axis_ratio = {}
-R_e        = {}
-R_e_arcsec = {}
+magnitudes     = {}
+Ser_index      = {}
+axis_ratio     = {}
+position_angle = {}
+R_e            = {}
+R_e_arcsec     = {}
 
 for i, band in zip(range(len(filters)), filters):
     im_fits = fits.open(file_name)
@@ -290,6 +286,8 @@ Please delete all galfit ouputs! - (rm galfit.*)''')
     #Parse galfit output
     with open('galfit.01') as f:
         for line in f:
+            if 'Position angle' in line:
+                position_angle[band] = float(line.strip().split(')')[1].strip().split(' ')[0])
             if 'Integrated magnitude' in line:
                 magnitudes[band] = float(line.strip().split(')')[1].strip().split(' ')[0])
             if 'Sersic index' in line:
@@ -312,13 +310,15 @@ Please delete all galfit ouputs! - (rm galfit.*)''')
     #Rename galfit output to unique name!
     os.rename('galfit.01', obj_name + '_' + band + '.galfit')
 
-
-print("M[Sun] =", 0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996 )
-print('Ext:',    " ".join([band + ' : '      + str(ned[band])        for band in filters]))
-print('Mag:',    " ".join([band + ' : '      + str(magnitudes[band]) for band in filters]))
-print('Sersic:', " ".join([band + ' : '      + str(Ser_index[band])  for band in filters]))
-print('R_e[px]:', " ".join([band + ' : '     + str(R_e[band])        for band in filters]))
-print('R_e[arcsec]:', " ".join([band + ' : ' + str(R_e_arcsec[band])        for band in filters]))
-print('Axis ratio:', " ".join([band + ' : '  + str(axis_ratio[band]) for band in filters]))
-print('Distance:', dist, 'Mpc')
-print('redshift:', ned['redshift'])
+print("Galaxy:", obj_name)
+print("RA:", center.ra, "Dec:", center.dec)
+print("log10(M*[Sun]):"      , 0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996 )
+print('Ext[mag]:'            , " ".join([band + ' : ' + str(ned[band])            for band in filters]))
+print('Mag[mag]:'            , " ".join([band + ' : ' + str(magnitudes[band])     for band in filters]))
+print('Sersic index:'        , " ".join([band + ' : ' + str(Ser_index[band])      for band in filters]))
+print('R_e[px]:'             , " ".join([band + ' : ' + str(R_e[band])            for band in filters]))
+print('R_e[arcsec]:'         , " ".join([band + ' : ' + str(R_e_arcsec[band])     for band in filters]))
+print('Axis ratio:'          , " ".join([band + ' : ' + str(axis_ratio[band])     for band in filters]))
+print('Position angle[deg]:' , " ".join([band + ' : ' + str(position_angle[band]) for band in filters]))
+print('Distance[Mpc]:', dist, dist_type)
+print('Redshift:', ned['redshift'])
