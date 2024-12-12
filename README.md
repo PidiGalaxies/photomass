@@ -25,6 +25,8 @@ If you use this code in your research or projects, please cite the following acc
 Ebrova, Bilek, & Eliasek: "Photometric stellar masses for galaxies in DESI Legacy Imaging
 Surveys" (2025; submitted)
 
+This paper contains detailed description of the procedures and motivations behind the script.
+
 
 ## Limitations
 The script uses [NED](ned.ipac.caltech.edu) and [`get_icrs_coordinates` from `astropy`](cds.unistra.fr) to get galactic extinctions and coordinates.
@@ -58,7 +60,7 @@ The outpus are to stdout. For example:
 $ python3 ../photomass/photomass_ls.py  NGC4656 4 --galpath ../ --local
 galaxy: NGC4656
 RA,Dec =  
-log(M*[Msum]) = 9.247399396604427
+log(M*[Msun]) = 9.247399396604427
 Ext: g : 0.043 r : 0.029
 Mag: g : -18.493440451964197 r : -18.680040451964196
 Sersic index: g : 1.1615 r : 1.1101
@@ -68,14 +70,17 @@ Axis ratio: g : 0.1761 r : 0.1885
 Distance[Mpc]: 9.315541188290236
 redshift: 0.002155
 ```
-Where M[Sun] is mass estimate in Sun masses, 
+Where M[Sun] is mass estimate in Sun masses.
+ 
 These variables are calculated for different filters:
- - `Ext`: galactic extinctions from NED 
- - `Mag`: absolute magnitude (corrected using galactic extinction)
- - `Sersic`: Sersic radius
- - `R_e`: Effective radius - in pixels and arcsec
- - `Axis ratio`
+ - `Ext`: Galactic extinctions from NED 
+ - `Mag`: extinction-correlated absolute magnitude
+ - `Sersic index`: Sersic index of the GALFIT model
+ - `R_e`: Effective radius of the GALFIT model - in pixels and arcsec
+ - `Axis ratio`: axis ratio of the GALFIT model
+
 `Distance`: value from input or from redshift (using WMAP9 model from astropy)
+
 `redshift`: redshift from NED 
 
 
