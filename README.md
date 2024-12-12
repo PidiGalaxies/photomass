@@ -1,7 +1,7 @@
-*** photmass_ls.py ***
+# photmass_ls.py
 
-** Requirements **
-------------------
+## Requirements 
+
 galfit : https://users.obs.carnegiescience.edu/peng/work/galfit/galfit.html
 
 python libraries:
@@ -17,12 +17,12 @@ pip3 install "numpy<2.0" scipy SEP astropy requests
 
 > SEP 1.2.1 does not work with numpy 2.0 or newer
 
-** Limitations **
+## Limitations
 The script uses [NED](ned.ipac.caltech.edu) and [`get_icrs_coordinates` from `astropy`](cds.unistra.fr) to get galactic extinctions and coordinates.
 If the object is not present in these databases corresponding exception will be raised.
 
 
-** Running script ** 
+## Running script
 You can use `python3 photomass_ls.py` to get usage:
 ```
 usage: photomass_ls.py [-h] [--overwrite] [--local] [--galpath GALPATH] [--dist DIST] [--additional-filters ADDITIONAL_FILTERS] [--plot] OBJECT radius
