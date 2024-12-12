@@ -21,6 +21,7 @@ pip3 install "numpy<2.0" scipy SEP astropy requests
 ## Citation 
 
 If you use this code in your research or projects, please cite the following accompanied paper:
+
 Ebrova, Bilek, & Eliasek: "Photometric stellar masses for galaxies in DESI Legacy Imaging
 Surveys" (2025; submitted)
 
