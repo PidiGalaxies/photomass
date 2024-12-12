@@ -17,6 +17,14 @@ pip3 install "numpy<2.0" scipy SEP astropy requests
 
 > SEP 1.2.1 does not work with numpy 2.0 or newer
 
+
+## Citation 
+
+If you use this code in your research or projects, please cite the following accompanied paper:
+Ebrova, Bilek, & Eliasek: "Photometric stellar masses for galaxies in DESI Legacy Imaging
+Surveys" (2025; submitted)
+
+
 ## Limitations
 The script uses [NED](ned.ipac.caltech.edu) and [`get_icrs_coordinates` from `astropy`](cds.unistra.fr) to get galactic extinctions and coordinates.
 If the object is not present in these databases corresponding exception will be raised.
