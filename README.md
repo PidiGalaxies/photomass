@@ -43,11 +43,11 @@ You can use `python3 photomass_ls.py` to get usage:
 ```
 usage: photomass_ls.py [-h] [--refetch] [--galpath GALPATH] [--dist DIST] [--additional-filters ADDITIONAL_FILTERS] [--plot] OBJECT radius
 
-Computes a stellar mass estimate for a given galaxy based on GALFIT photometry with Legacy Surveys data.
+Computes a stellar mass estimate for a given galaxy based on GALFIT photometry with Legacy Surveys data
 
 positional arguments:
-  OBJECT                name of the galaxy for which the stellar mass estimate is done.
-  radius                approximate galaxy angular size in arcseconds (e.g. semi-major axis at SB=25.5mag/arcsec^2 in the Spitzer 3.6 micron filter).
+  OBJECT                name of the galaxy for which the stellar mass estimate is done
+  radius                approximate galaxy angular size in arcseconds (e.g. semi-major axis at SB=25.5mag/arcsec^2 in the Spitzer 3.6 micron filter)
 
 options:
   -h, --help            show this help message and exit
@@ -85,7 +85,7 @@ These variables are calculated for different filters:
  - `Sersic index`: Sersic index of the GALFIT model
  - `R_e`: effective radius of the GALFIT model - in pixels and arcsec
  - `Axis ratio`: axis ratio of the GALFIT model
- - `Position angle`: positioning angle of the GALFIT model
+ - `Position angle`: positioning angle of the GALFIT model (North=0, East=90)
 
 `Distance`: value from input or from redshift (using WMAP9 model from astropy)
 
