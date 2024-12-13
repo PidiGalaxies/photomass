@@ -7,7 +7,7 @@ photomass_ls computes an estimate of the stellar mass for a given galaxy based o
 input files with well-assessed initial values, performs the GALFIT photometry, and calculates the stellar mass estimate. More details are given in Ebrová, Bílek, & Eliášek (2025).
 
 
-## Citation 
+## Citation
 
 If you use this code in your research or projects, please cite the following accompanied paper:
 
@@ -15,12 +15,12 @@ Ebrová, Bílek, & Eliášek: "Photometric stellar masses for galaxies in DESI L
 Surveys" (2025; submitted)
 
 
-## Requirements 
+## Requirements
 
 GALFIT : https://users.obs.carnegiescience.edu/peng/work/galfit/galfit.html
 
 python libraries:
-requests, numpy, scipy, SEP, astropy, matplotlib (with option --plot)
+requests, numpy, scipy, SEP, astropy, [matplotlib (required for use of option `--plot`)]
 
 
 You can install required packages into virtual environment:
@@ -39,11 +39,12 @@ If the object is not present in these databases corresponding exception will be 
 
 
 ## Running the script
-You can use `python3 photomass_ls.py` to get usage:
+You can run the script to get list of options with descriptions like this:
 ```
+$ ./photomass_ls.py -h
 usage: photomass_ls.py [-h] [--refetch] [--galpath GALPATH] [--dist DIST] [--additional-filters ADDITIONAL_FILTERS] [--plot] OBJECT radius
 
-Computes a stellar mass estimate for a given galaxy based on GALFIT photometry with Legacy Surveys data
+computes a stellar mass estimate for a given galaxy based on GALFIT photometry with Legacy Surveys data
 
 positional arguments:
   OBJECT                name of the galaxy for which the stellar mass estimate is done
@@ -55,31 +56,36 @@ options:
   --galpath GALPATH     path to galfit64 binary; if not set, $PATH is searched
   --dist DIST           galaxy distance in Mcp
   --additional-filters ADDITIONAL_FILTERS
-                        other filters without delimiter
+                        other filters without delimiter (e.g. 'xi')
   --plot                plot png image of source data and masked data
 ```
 
-The outpus are to stdout. For example:
+Thea numerical outpus are printed to stdout. For example:
 ```
-$python3 ../photomass/photomass_ls.py NGC474 106.3 --dist 30.88 
+$./photomass_ls.py NGC474 106.3 --dist 30.88
 Downloading https://www.legacysurvey.org/viewer/fits-cutout?ra=20.02786271688&dec=3.41551721475&height=1024&width=1024&layer=ls-dr10&pixscale=0.524&bands=gr
 |===========================================================================================================================| 8.3M/8.3M (100.00%)         2s
 Galaxy: NGC474
-RA: 20d01m40.30578077s Dec: 3d24m55.8619731s
-log10(M*[Sun]): 10.789485509368545
+RA: 20.0233 deg Dec: 3.4143 deg
+log10(M*[Sun]): 10.7895
 Ext[mag]: g : 0.112 r : 0.075
-Mag[mag]: g : -20.504586458318492 r : -21.29338645831849
+Mag[mag]: g : -20.5046 r : -21.2934
 Sersic index: g : 3.0489 r : 3.872
 R_e[px]: g : 44.7267 r : 48.0426
-R_e[arcsec]: g : 23.4367908 r : 25.1743224
+R_e[arcsec]: g : 23.4368 r : 25.1743
 Axis ratio: g : 0.8185 r : 0.8188
 Position angle[deg]: g : 21.1833 r : 19.0952
 Distance[Mpc]: 30.88 (from input)
 Redshift: 0.007722
 ```
-where and log(M*[Msun]) is the estimate of the logarithm of the galaxy stellar mass computed by Eq(1) of Ebrova et al. (2025), and Msun is the sollar masses.
- 
-These variables are calculated for different filters:
+where:
+`Galaxy`: `OBJECT`
+
+`RA`, `Dec`: coordinates of the `OBJECT`
+
+`log(M*[Msun]`: the estimate of the logarithm of the galaxy stellar mass computed by Eq(1) of Ebrova et al. (2025), and Msun is the sollar masses.
+
+The next set of variables is calculated for different filters:
  - `Ext`: Galactic extinctions in DES filters from Schlafly & Finkbeiner (2011) using NASA/IPAC Extragalactic Database (NED)
  - `Mag`: extinction-correlated absolute magnitude calculated from the galaxy distance and the GLAFIT Integrated magnitude
  - `Sersic index`: Sersic index of the GALFIT model
@@ -89,7 +95,7 @@ These variables are calculated for different filters:
 
 `Distance`: value from input or from redshift (using WMAP9 model from astropy)
 
-`Redshift`: redshift from NED 
+`Redshift`: redshift from NED
 
 
 The script also saves these files:

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import numpy as np
 import astropy.io.fits as fits
 from astropy import units as u
@@ -43,13 +44,13 @@ def harvest_ned(_id):
         {'r': (float), 'z': (float), 'i': (float), 'redshift': (float)}
     '''
     import requests
-    oid = _id.encode('ascii')   
+    oid = _id.encode('ascii')
     x = requests.get('https://ned.ipac.caltech.edu/cgi-bin/gmd?uplist=' + oid.decode('ascii') + '&delimiter=bar&nondb=user_objname&position=z&SchEXT=DES+r&SchEXT=DES+g&SchEXT=DES+z')
     data = [z for z in x.content.split(b'\n') if oid in z ]
     if len(data) == 0:
         raise(Exception("Failed to get data for "+ _id + " from NED"))
     data = data[0].split(b'|') # the line with values starts with oid and is deliminated by '|'
-    return {'g':float(data[1]), 'r':float(data[2]),'z':float(data[3]),'redshift':float(data[4])} 
+    return {'g':float(data[1]), 'r':float(data[2]),'z':float(data[3]),'redshift':float(data[4])}
 
 import sys
 import os
@@ -61,7 +62,7 @@ parser.add_argument("radius", help="approximate galaxy angular size in arcsecond
 parser.add_argument("--refetch", help="re-download and re-analyse image even if a local copy exists", action="store_true")
 parser.add_argument("--galpath", help="path to galfit64 binary; if not set, $PATH is searched", action="store", default="")
 parser.add_argument("--dist", help="galaxy distance in Mcp", action="store", default=None)
-parser.add_argument("--additional-filters", help="other filters without delimiter", action="store", default='')
+parser.add_argument("--additional-filters", help="other filters without delimiter (e.g. 'xi')", action="store", default='')
 parser.add_argument("--plot", help="plot png image of source data and masked data", action="store_true")
 
 args = parser.parse_args()
@@ -79,7 +80,7 @@ else:
 obj_r =  args.radius # e.g. amaj(arcsec) Semi-major axis at level {mu}(3.6um)=25.5mag(AB)/arcsec^2^[ucd=phys.angSize.smajAxis]
 r_fac = 2.5
 ls_scale = 0.262 #LS default plate scale 0.262 arcsec/pixel
-wpx = 1024 # The maximum size for cutouts (in number of pixels) is currently 512 # currently more!!    
+wpx = 1024 # The maximum size for cutouts (in number of pixels) is currently 512 # currently more!!
 
 downsize = int(2 * r_fac * obj_r / ls_scale / wpx + 0.5) # with respect to the default plate scale of 0.262 arcsec/pixel
 downsize = downsize if downsize > 0 else 1
@@ -106,7 +107,7 @@ R_e_arcsec     = {}
 
 for i, band in zip(range(len(filters)), filters):
     im_fits = fits.open(file_name)
-    
+
     out_image_name = obj_name + '_' + band + '.fit'
     out_mask_name  = obj_name + '_' + band + '_mask.fit'
 
@@ -116,79 +117,79 @@ for i, band in zip(range(len(filters)), filters):
     im_fits[0].header['BANDS'] = band
     im_fits[0].header['BAND0'] = band
     for i in range(1, len(filters)):
-            im_fits[0].header.remove('BAND' + str(i)) 
+            im_fits[0].header.remove('BAND' + str(i))
     im_fits.writeto(out_image_name, overwrite=True)  # save galaxy image
-    
-    
+
+
     im = im_fits[0].data
     if len(im) == 0 or np.all(im==0):
         print('do data for band:', band)
         filters.remove(band)
         continue
-    
-    
+
+
     ######
     ## SOURCE DETECTON, MASK CREATION
-    
+
     # sep manual : https://sep.readthedocs.io/en/v1.1.x/reference.html
-    
+
     sep.set_extract_pixstack(17e6)
     sep.set_sub_object_limit(1e4)
-    
+
     # detect extended objects
     im = im.byteswap().newbyteorder()
     bkg = sep.Background(im, bw=wpx // 4, bh=wpx // 4)
-    
+
     data_sub = im - bkg
     objects, segmap = sep.extract(data_sub, deblend_cont=1.0, thresh=1, err=bkg.globalrms, segmentation_map=True) #0.03
-    
+
     mainobj_no = segmap[wpx // 2,wpx // 2] ## object number of the main galaxy (is in the image center)
     mask = (segmap > 0) * (segmap != mainobj_no) # objects to mask
-    
+
     #detect small objects (stars)
-    
+
     bkg_fine = sep.Background(im, bw = 2, bh = 2)
-    
+
     data_sub_fine = im - bkg_fine
     objects_fine, segmap_fine = sep.extract(data_sub_fine, deblend_cont=1, thresh=2, err=bkg_fine.globalrms, segmentation_map=True) #0.03
-    
+
     mainobj_no_fine = segmap_fine[wpx // 2,wpx // 2] ## object number of the main galaxy (is in the image center)
-    
+
     maxratio = 2
     #elongated objects to exclude from mask
     l = [i + 1 for i in range(len(objects_fine)) if objects_fine['a'][i] / objects_fine['b'][i] > maxratio]
     l.append(mainobj_no_fine)
     segmap_fine[np.isin(segmap_fine, l)] = 0
-    
+
     mask_fine = (segmap_fine > 0) # small objects to mask
-    
-    
+
+
     mask_tot = (mask_fine + mask) > 0 # masked by at least one mask
     mask_tot_smooth = gaussian_filter(mask_tot * 1., sigma=5) > 0.1 #expand mask
     mask_tot = (mask_tot + mask_tot_smooth) > 0 # masked pixels are True, unmasked False
-    
+
     hdu = fits.PrimaryHDU((mask_tot).astype('int'))  # save mask
     hdu.writeto(out_mask_name, overwrite=True)
-    
-    
-    
-    
+
+
+
+
     #####
     # set initial estimates for Galfit
     # xmin, xmax, ymin, ymax, plate_scale, ZP
     # xc, xy, mag, Re, n, q, PA
-    
-    
+
+
     xc = wpx / 2
     yc = wpx / 2
-    
+
     xmin = 0
     xmax = wpx - 1
     ymin = 0
     ymax = wpx - 1
 
     plate_scale = 0.262 * downsize # arcsec/pixel
-     
+
     mag = -2.5 * np.log10(objects['flux'][mainobj_no - 1]) + ZP
     a     = objects['a']    [mainobj_no - 1]
     b     = objects['b']    [mainobj_no - 1]
@@ -198,72 +199,72 @@ for i, band in zip(range(len(filters)), filters):
     q = b / a
     PA = -theta / np.pi * 180 + 90
     sky_bkg = np.nanmedian(bkg)
-    
-    #print('xmin = ', xmin, '\nxmax = ', xmax, '\nymin = ', ymin, '\nymax = ', ymax, '\nplate_scale = ', plate_scale, '\nZeropoint = ', ZP,'\n\n') 
-    #print('xc = ', xc, '\nyc = ', yc,'\nmag = ',mag,'\nRe = ', Re, '\nn = ', n, '\nq = ',q, '\nPA = ', PA) 
-    
-    
-    
+
+    #print('xmin = ', xmin, '\nxmax = ', xmax, '\nymin = ', ymin, '\nymax = ', ymax, '\nplate_scale = ', plate_scale, '\nZeropoint = ', ZP,'\n\n')
+    #print('xc = ', xc, '\nyc = ', yc,'\nmag = ',mag,'\nRe = ', Re, '\nn = ', n, '\nq = ',q, '\nPA = ', PA)
+
+
+
     galimp = f'''===============================================================================
     # IMAGE and GALFIT CONTROL PARAMETERS
     A) {out_image_name}            # Input data image (FITS file)
     B) {obj_name}_{band}_out.fits       # Output data image block
-    C) none                # Sigma image name (made from data if blank or "none") 
+    C) none                # Sigma image name (made from data if blank or "none")
     D) none   #        # Input PSF image and (optional) diffusion kernel
-    E) 1                   # PSF fine sampling factor relative to data 
+    E) 1                   # PSF fine sampling factor relative to data
     F) {out_mask_name}                # Bad pixel mask (FITS image or ASCII coord list)
-    G) none                # File with parameter constraints (ASCII file) 
+    G) none                # File with parameter constraints (ASCII file)
     H) {xmin} {xmax} {ymin} {ymax}   # Image region to fit (xmin xmax ymin ymax)
     I) 100    100          # Size of the convolution box (x y)
-    J) {ZP}              # Magnitude photometric zeropoint 
+    J) {ZP}              # Magnitude photometric zeropoint
     K) {plate_scale} {plate_scale}        # Plate scale (dx dy)    [arcsec per pixel]
     O) regular             # Display type (regular, curses, both)
     P) 0                   # Choose: 0=optimize, 1=model, 2=imgblock, 3=subcomps
-    
+
     # INITIAL FITTING PARAMETERS
     #
-    #   For object type, the allowed functions are: 
-    #       nuker, sersic, expdisk, devauc, king, psf, gaussian, moffat, 
-    #       ferrer, powsersic, sky, and isophote. 
-    #  
+    #   For object type, the allowed functions are:
+    #       nuker, sersic, expdisk, devauc, king, psf, gaussian, moffat,
+    #       ferrer, powsersic, sky, and isophote.
+    #
     #   Hidden parameters will only appear when they're specified:
-    #       C0 (diskyness/boxyness), 
+    #       C0 (diskyness/boxyness),
     #       Fn (n=integer, Azimuthal Fourier Modes),
     #       R0-R10 (PA rotation, for creating spiral structures).
-    # 
+    #
     # -----------------------------------------------------------------------------
-    #   par)    par value(s)    fit toggle(s)    # parameter description 
+    #   par)    par value(s)    fit toggle(s)    # parameter description
     # -----------------------------------------------------------------------------
-    
+
     # Object number: 1
      0) sersic                 #  object type
      1) {xc} {yc}  1 1  #  position x, y
      3) {mag}     1          #  Integrated magnitude
      4) {Re}        1          #  R_e (half-light radius)   [pix]
-     5) {n}         1          #  Sersic index n (de Vaucouleurs n=4) 
-     6) 0.0000      0          #     ----- 
-     7) 0.0000      0          #     ----- 
-     8) 0.0000      0          #     ----- 
-     9) {q}      1          #  axis ratio (b/a)  
+     5) {n}         1          #  Sersic index n (de Vaucouleurs n=4)
+     6) 0.0000      0          #     -----
+     7) 0.0000      0          #     -----
+     8) 0.0000      0          #     -----
+     9) {q}      1          #  axis ratio (b/a)
     10) {PA}    1          #  position angle (PA) [deg: Up=0, Left=90]
-     Z) 0                      #  output option (0 = resid., 1 = Don't subtract) 
-    
+     Z) 0                      #  output option (0 = resid., 1 = Don't subtract)
+
     # Object number: 2
      0) sky                    #  object type
      1) {sky_bkg}      1          #  sky background at center of fitting region [ADUs]
      2) 0.0000      1          #  dsky/dx (sky gradient in x)
      3) 0.0000      1          #  dsky/dy (sky gradient in y)
-     Z) 0                      #  output option (0 = resid., 1 = Don't subtract) 
-    
+     Z) 0                      #  output option (0 = resid., 1 = Don't subtract)
+
     # downsize = {downsize}
-    
+
     ================================================================================ '''
-    
+
     #Write galfit input
     gal_im = obj_name + '_' + band + '_gal.imp'
     with open(gal_im, 'w') as f:
         f.write(galimp)
-    
+
     #Plot png image with masked data vs full data
     if args.plot:
         import matplotlib.pyplot as plt
@@ -273,8 +274,8 @@ for i, band in zip(range(len(filters)), filters):
         plt.subplot(122)
         plt.imshow(np.log10(im))
         plt.savefig(obj_name + '_' + band + '_image.png')
-    
-    
+
+
     #Tests if galfit ouputs exists - there should not be any galfit.* files!
     if os.path.isfile('galfit.*'):
         print('''File galfit.* exists!
@@ -282,7 +283,7 @@ Please delete all galfit ouputs! - (rm galfit.*)''')
         raise
     if os.system(args.galpath + 'galfit64 ' + gal_im + ' >/dev/null'):
         raise Exception('Problem executing galfit64!')
-    
+
     #Parse galfit output
     with open('galfit.01') as f:
         for line in f:
@@ -302,23 +303,23 @@ Please delete all galfit ouputs! - (rm galfit.*)''')
                 px_to_ang_dy = float(_[1])
     if px_to_ang_dx == px_to_ang_dx and px_to_ang_dx == plate_scale:
         R_e_arcsec[band] = R_e[band] * px_to_ang_dx
-    
+
     #Fix magnitudes - only for the filters with extinction from NED!!!
     if band in ned.keys():
         magnitudes[band] += - 25 - ned[band] - 5 * np.log10(dist)
-    
+
     #Rename galfit output to unique name!
     os.rename('galfit.01', obj_name + '_' + band + '.galfit')
 
 print("Galaxy:", obj_name)
-print("RA:", center.ra, "Dec:", center.dec)
-print("log10(M*[Sun]):"      , 0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996 )
-print('Ext[mag]:'            , " ".join([band + ' : ' + str(ned[band])            for band in filters]))
-print('Mag[mag]:'            , " ".join([band + ' : ' + str(magnitudes[band])     for band in filters]))
-print('Sersic index:'        , " ".join([band + ' : ' + str(Ser_index[band])      for band in filters]))
-print('R_e[px]:'             , " ".join([band + ' : ' + str(R_e[band])            for band in filters]))
-print('R_e[arcsec]:'         , " ".join([band + ' : ' + str(R_e_arcsec[band])     for band in filters]))
-print('Axis ratio:'          , " ".join([band + ' : ' + str(axis_ratio[band])     for band in filters]))
-print('Position angle[deg]:' , " ".join([band + ' : ' + str(position_angle[band]) for band in filters]))
-print('Distance[Mpc]:', dist, dist_type)
-print('Redshift:', ned['redshift'])
+print("RA:", "{:4g}".format(center.ra), "Dec:", "{:4g}".format(center.dec))
+print("log10(M*[Sun]):"      , "{:4g}".format(0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996 ))
+print('Ext[mag]:'            , " ".join([band + ' : ' + "{:4g}".format(ned[band])            for band in filters]))
+print('Mag[mag]:'            , " ".join([band + ' : ' + "{:4g}".format(magnitudes[band])     for band in filters]))
+print('Sersic index:'        , " ".join([band + ' : ' + "{:4g}".format(Ser_index[band])      for band in filters]))
+print('R_e[px]:'             , " ".join([band + ' : ' + "{:4g}".format(R_e[band])            for band in filters]))
+print('R_e[arcsec]:'         , " ".join([band + ' : ' + "{:4g}".format(R_e_arcsec[band])     for band in filters]))
+print('Axis ratio:'          , " ".join([band + ' : ' + "{:4g}".format(axis_ratio[band])     for band in filters]))
+print('Position angle[deg]:' , " ".join([band + ' : ' + "{:4g}".format(position_angle[band]) for band in filters]))
+print('Distance[Mpc]:', "{:4g}".format(dist), dist_type)
+print('Redshift:', "{:4g}".format(ned['redshift']))
