@@ -3,8 +3,8 @@
 
 ## About the script
 
-photomass computes an estimate of the stellar mass for a given galaxy based on a photometry performed by GALFIT on g & r band data from DESI Legacy Imaging Surveys. The script automatically downloads images of the galaxy from the Legacy Surveys (DR10) database, create image masks, generate GALFIT
-input files with well-assessed initial values, perform the GALFIT photometry, and calculate the stellar mass estimate. More details are given in Ebrová, Bílek, & Eliášek (2025).
+photomass_ls computes an estimate of the stellar mass for a given galaxy based on a photometry performed by GALFIT on g & r band data from DESI Legacy Imaging Surveys. The script automatically downloads images of the galaxy from the Legacy Surveys (DR10) database, creates image masks, generates GALFIT
+input files with well-assessed initial values, performs the GALFIT photometry, and calculates the stellar mass estimate. More details are given in Ebrová, Bílek, & Eliášek (2025).
 
 
 ## Citation 
@@ -34,7 +34,7 @@ pip3 install "numpy<2.0" scipy SEP astropy requests
 
 
 ## Limitations
-The script uses [NED](ned.ipac.caltech.edu) and [`get_icrs_coordinates` from `astropy`](cds.unistra.fr) to get galactic extinctions and coordinates.
+The script uses [NED](ned.ipac.caltech.edu) and [`get_icrs_coordinates` from `astropy`](cds.unistra.fr) to get galactic extinctions and coordinates for the given galaxy.
 If the object is not present in these databases corresponding exception will be raised.
 
 
