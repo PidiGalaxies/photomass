@@ -79,11 +79,12 @@ Distance[Mpc]: 30.88 (from input)
 Redshift: 0.007722
 ```
 where:
+
 `Galaxy`: `OBJECT`
 
 `RA`, `Dec`: coordinates of the `OBJECT`
 
-`log(M*[Msun]`: the estimate of the logarithm of the galaxy stellar mass computed by Eq(1) of Ebrova et al. (2025), and Msun is the sollar masses.
+`log(M*[Msun]`: the estimate of the logarithm of the galaxy stellar mass computed by Eq(1) of Ebrova et al. (2025), where Msun is the sollar masses.
 
 The next set of variables is calculated for different filters:
  - `Ext`: Galactic extinctions in DES filters from Schlafly & Finkbeiner (2011) using NASA/IPAC Extragalactic Database (NED)
