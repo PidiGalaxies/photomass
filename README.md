@@ -1,4 +1,4 @@
-# photmass_ls.py
+# photomass_ls.py
 
 
 ## About the script
