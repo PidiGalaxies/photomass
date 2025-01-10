@@ -42,7 +42,7 @@ If the object is not present in these databases corresponding exception will be 
 You can run the script to get list of options with descriptions like this:
 ```
 $ ./photomass_ls.py -h
-usage: photomass_ls.py [-h] [--refetch] [--galpath GALPATH] [--dist DIST] [--additional-filters ADDITIONAL_FILTERS] [--plot] OBJECT radius
+usage: photomass_ls.py [-h] [--refetch] [--galpath GALPATH] [--dist DIST] [--coordinates COORDINATES] [--additional-filters ADDITIONAL_FILTERS] [--plot] OBJECT radius
 
 computes a stellar mass estimate for a given galaxy based on GALFIT photometry with Legacy Surveys data
 
@@ -55,12 +55,14 @@ options:
   --refetch             re-download and re-analyse image even if a local copy exists
   --galpath GALPATH     path to galfit64 binary; if not set, $PATH is searched
   --dist DIST           galaxy distance in Mcp
+  --coordinates COORDINATES
+                        comma seperated coordinates: RA,DEC with unints (default units are deg); requires --dist
   --additional-filters ADDITIONAL_FILTERS
-                        other filters without delimiter (e.g. 'xi')
+                        other filters without delimiter (e.g. 'zi')
   --plot                plot png image of source data and masked data
 ```
 
-Thea numerical outpus are printed to stdout. For example:
+The numerical outpus are printed to stdout. For example:
 ```
 $./photomass_ls.py NGC474 106.3 --dist 30.88
 Downloading https://www.legacysurvey.org/viewer/fits-cutout?ra=20.02786271688&dec=3.41551721475&height=1024&width=1024&layer=ls-dr10&pixscale=0.524&bands=gr
@@ -79,12 +81,11 @@ Distance[Mpc]: 30.88 (from input)
 Redshift: 0.007722
 ```
 where:
+`Galaxy`: `OBJECT` (converted to upper case if no coordinate are specified)
 
-`Galaxy`: `OBJECT`
+`RA`, `Dec`: coordinates of the `OBJECT` in deg
 
-`RA`, `Dec`: coordinates of the `OBJECT`
-
-`log(M*[Msun]`: the estimate of the logarithm of the galaxy stellar mass computed by Eq(1) of Ebrova et al. (2025), where Msun is the sollar masses.
+`log(M*[Msun])`: the estimate of the logarithm of the galaxy stellar mass computed by Eq(1) of Ebrova et al. (2025), where Msun is the sollar masses.
 
 The next set of variables is calculated for different filters:
  - `Ext`: Galactic extinctions in DES filters from Schlafly & Finkbeiner (2011) using NASA/IPAC Extragalactic Database (NED)
@@ -98,6 +99,29 @@ The next set of variables is calculated for different filters:
 
 `Redshift`: redshift from NED
 
+
+Example with using coordinate:
+```
+photomass_ls.py ngc474 --coordinates "20.0233 deg, 3.4143 deg" 106.3  --dist 30.88 --galpath `pwd`
+https://www.legacysurvey.org/viewer/fits-cutout?ra=20.0233&dec=3.4143&height=1024&width=1024&layer=ls-dr10&pixscale=0.524&bands=gr
+Downloading https://www.legacysurvey.org/viewer/fits-cutout?ra=20.0233&dec=3.4143&height=1024&width=1024&layer=ls-dr10&pixscale=0.524&bands=gr
+|===============================================================================================================================================================================================================================================================| 8.3M/8.3M (100.00%)         1s
+Galaxy: ngc474
+RA: 20.0233 Dec: 3.4143
+log10(M*[Sun]): 10.7189
+Ext[mag]: g : 0.112 r : 0.075
+Mag[mag]: g : -20.3159 r : -21.1151
+Sersic index: g : 1.2733 r : 1.9287
+R_e[px]: g : 68.9085 r : 66.2166
+R_e[arcsec]: g : 36.1081 r : 34.6975
+Axis ratio: g : 0.8257 r : 0.8142
+Position angle[deg]: g : 14.7853 r : 16.299
+Distance[Mpc]: 30.88 (from input)
+Redshift:  nan
+
+```
+Here the `OBJECT` is not converted to uppercase, redshift is not recived from database and so it is not available. 
+> Warning: the script check it data from legacy survey is present - there is no idication of coordinates in the name, so you have to delete original fits file, if you want to use same object name with different coordinates.
 
 The script also saves these files:
  - downloaded FITS - with file name : `<object_name>_<downsize>_<size>px_ls-dr10_<filters>.fits`

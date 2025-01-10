@@ -4,9 +4,11 @@ import astropy.io.fits as fits
 from astropy import units as u
 from astropy.coordinates import get_icrs_coordinates
 from astropy.coordinates import SkyCoord
+from astropy.coordinates import Angle
 import sep
 from scipy.ndimage import gaussian_filter
 import os
+import requests
 
 def get_image_fits(ra, dec, wpx, downsize, LSversion='ls-dr9',bands="grz" ):
     '''
@@ -43,7 +45,6 @@ def harvest_ned(_id):
     Returns:
         {'r': (float), 'z': (float), 'i': (float), 'redshift': (float)}
     '''
-    import requests
     oid = _id.encode('ascii')
     x = requests.get('https://ned.ipac.caltech.edu/cgi-bin/gmd?uplist=' + oid.decode('ascii') + '&delimiter=bar&nondb=user_objname&position=z&SchEXT=DES+r&SchEXT=DES+g&SchEXT=DES+z')
     data = [z for z in x.content.split(b'\n') if oid in z ]
@@ -51,6 +52,11 @@ def harvest_ned(_id):
         raise(Exception("Failed to get data for "+ _id + " from NED"))
     data = data[0].split(b'|') # the line with values starts with oid and is deliminated by '|'
     return {'g':float(data[1]), 'r':float(data[2]),'z':float(data[3]),'redshift':float(data[4])}
+
+def harvest_ned_coord(coords):
+    req = requests.get('https://ned.ipac.caltech.edu/cgi-bin/calc?in_csys=Equatorial&in_equinox=J2000.0&obs_epoch=2000.0&lon=' + str(coords['ra']) + '&lat=' + str(coords['dec']) + '&pa=0.0&out_csys=Equatorial&out_equinox=J2000.0')
+    lines = [_ for _ in b''.join(req).decode('ascii').split('\n') if 'DES' in _]
+    return {_[0][4:]: float(_[1][4:]) for _ in np.array([_.split('</td>') for _ in lines])[:,[1,3]]}
 
 import sys
 import os
@@ -62,14 +68,43 @@ parser.add_argument("radius", help="approximate galaxy angular size in arcsecond
 parser.add_argument("--refetch", help="re-download and re-analyse image even if a local copy exists", action="store_true")
 parser.add_argument("--galpath", help="path to galfit64 binary; if not set, $PATH is searched", action="store", default="")
 parser.add_argument("--dist", help="galaxy distance in Mcp", action="store", default=None)
-parser.add_argument("--additional-filters", help="other filters without delimiter (e.g. 'xi')", action="store", default='')
+parser.add_argument("--coordinates", help="comma seperated coordinates: RA,DEC with unints (default units are deg); requires --dist", action="store", default=None)
+parser.add_argument("--additional-filters", help="other filters without delimiter (e.g. 'zi')", action="store", default='')
 parser.add_argument("--plot", help="plot png image of source data and masked data", action="store_true")
 
 args = parser.parse_args()
 filters = ['g', 'r']  + list(args.additional_filters)
-obj_name =  args.OBJECT.upper() # Convert everything to upper case to avoid data duplication
+if args.coordinates is not None:
+    obj_split = args.coordinates.split(',')
+    # this is not object, but coordinates
+    if args.dist is None:
+        print()
+        print('When using coordinated distance is required, please add `--dist distance`')
+        print()
+        sys.exit(1)
+    try:
+        try:
+            ra = float(obj_split[0])
+            ra = ra * u.deg
+        except:
+            ra = Angle(obj_split[0])
+        try:
+            dec = float(obj_split[1])
+            dec = dec * u.deg
+        except:
+            dec = Angle(obj_split[1])
+    except:
+        raise(Exception("Failed to read input"))
+    center = SkyCoord(ra=ra, dec=dec, frame='icrs')
+    ned = harvest_ned_coord({'ra':ra.hour, 'dec':dec.deg})
+    ned['redshift'] = np.nan
+    obj_name = args.OBJECT
 
-ned = harvest_ned(obj_name)
+else:
+    obj_name =  args.OBJECT.upper() # Convert everything to upper case to avoid data duplication
+    ned = harvest_ned(obj_name)
+    center = get_icrs_coordinates(obj_name)
+
 if args.dist is None:
     from astropy.cosmology import WMAP9
     dist = WMAP9.comoving_distance(ned['redshift']).value #distance in Mpc
@@ -87,7 +122,6 @@ downsize = downsize if downsize > 0 else 1
 
 ZP = 22.5 - 2.5 * np.log10(downsize ** 2) # zero point [22.5 for the LS fiducal pixel scale of 0.262 arcsec/px]
 
-center = get_icrs_coordinates(obj_name)
 
 file_name = obj_name +'_' + str(downsize) + '_' + str(wpx) + 'px_' + 'ls-dr10_' + "".join(filters) +  '.fits'
 
@@ -281,6 +315,9 @@ for i, band in zip(range(len(filters)), filters):
         print('''File galfit.* exists!
 Please delete all galfit ouputs! - (rm galfit.*)''')
         raise
+    if len(args.galpath) > 0 and args.galpath[-1] != '/':
+        args.galpath += '/'
+
     if os.system(args.galpath + 'galfit64 ' + gal_im + ' >/dev/null'):
         raise Exception('Problem executing galfit64!')
 
@@ -312,7 +349,7 @@ Please delete all galfit ouputs! - (rm galfit.*)''')
     os.rename('galfit.01', obj_name + '_' + band + '.galfit')
 
 print("Galaxy:", obj_name)
-print("RA:", "{:4g}".format(center.ra), "Dec:", "{:4g}".format(center.dec))
+print("RA:", "{:4g}".format(center.ra.deg), "Dec:", "{:4g}".format(center.dec.deg))
 print("log10(M*[Sun]):"      , "{:4g}".format(0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996 ))
 print('Ext[mag]:'            , " ".join([band + ' : ' + "{:4g}".format(ned[band])            for band in filters]))
 print('Mag[mag]:'            , " ".join([band + ' : ' + "{:4g}".format(magnitudes[band])     for band in filters]))
@@ -322,4 +359,4 @@ print('R_e[arcsec]:'         , " ".join([band + ' : ' + "{:4g}".format(R_e_arcse
 print('Axis ratio:'          , " ".join([band + ' : ' + "{:4g}".format(axis_ratio[band])     for band in filters]))
 print('Position angle[deg]:' , " ".join([band + ' : ' + "{:4g}".format(position_angle[band]) for band in filters]))
 print('Distance[Mpc]:', "{:4g}".format(dist), dist_type)
-print('Redshift:', "{:4g}".format(ned['redshift']))
+print('Redshift:', 'N/A' if np.isnan(ned['redshift']) else "{:4g}".format(ned['redshift']))
