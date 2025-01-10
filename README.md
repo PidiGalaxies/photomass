@@ -36,6 +36,7 @@ pip3 install "numpy<2.0" scipy SEP astropy requests
 ## Limitations
 The script uses [NED](ned.ipac.caltech.edu) and [`get_icrs_coordinates` from `astropy`](cds.unistra.fr) to get galactic extinctions and coordinates for the given galaxy.
 If the object is not present in these databases corresponding exception will be raised.
+You can use custom coordinates with `--coordinates` option to circumvent this limitation.
 
 
 ## Running the script
@@ -117,11 +118,11 @@ R_e[arcsec]: g : 36.1081 r : 34.6975
 Axis ratio: g : 0.8257 r : 0.8142
 Position angle[deg]: g : 14.7853 r : 16.299
 Distance[Mpc]: 30.88 (from input)
-Redshift:  nan
+Redshift:  N/A
 
 ```
 Here the `OBJECT` is not converted to uppercase, redshift is not recived from database and so it is not available. 
-> Warning: the script check it data from legacy survey is present - there is no idication of coordinates in the name, so you have to delete original fits file, if you want to use same object name with different coordinates.
+> Warning: the script checks if the file (filename) with data from legacy survey is present - there is no idication of coordinates in the filename, so you have to use `--refetch`, if you want to use same object name with different coordinates.
 
 The script also saves these files:
  - downloaded FITS - with file name : `<object_name>_<downsize>_<size>px_ls-dr10_<filters>.fits`
