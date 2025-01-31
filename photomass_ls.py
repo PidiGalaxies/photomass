@@ -23,19 +23,24 @@ def get_image_fits(ra, dec, wpx, downsize, LSversion='ls-dr9',bands="grz" ):
     # https://www.legacysurvey.org/dr9/description/
     ps = 0.262 * downsize # Pixscale=0.262 will return (approximately) the native pixels
 
-    url = "https://www.legacysurvey.org/viewer/fits-cutout?"
-    url += "ra="        + str(ra)
-    url += "&dec="      + str(dec)
-    url += "&height="   + str(wpx)
-    url += "&width="    + str(wpx)
-    url += "&layer="    + LSversion
-    url += "&pixscale=" + str(ps)
-    url += "&bands="    + bands
+    url_base = "https://www.legacysurvey.org/viewer/fits-cutout?"
+    param = ''
+    param += "ra="        + str(ra)
+    param += "&dec="      + str(dec)
+    param += "&height="   + str(wpx)
+    param += "&width="    + str(wpx)
+    param += "&layer="    + LSversion
+    param += "&pixscale=" + str(ps)
+    param += "&bands="    + bands
 
-    print(url)
+    image_fits = fits.open(url_base + param, cache=False)
 
-    image_fits = fits.open(url, cache=False)
-    return image_fits
+
+    url_base = "https://www.legacysurvey.org/viewer/jpeg-cutout?"
+
+    jpeg = requests.get(url_base + param, allow_redirects=True)
+
+    return image_fits, jpeg
 
 def harvest_ned(_id):
     '''
@@ -126,7 +131,9 @@ ZP = 22.5 - 2.5 * np.log10(downsize ** 2) # zero point [22.5 for the LS fiducal 
 file_name = obj_name +'_' + str(downsize) + '_' + str(wpx) + 'px_' + 'ls-dr10_' + "".join(filters) +  '.fits'
 
 if not os.path.isfile(file_name) or args.refetch:
-    im_fits = get_image_fits(center.ra.value, center.dec.value, wpx, downsize=downsize, LSversion = 'ls-dr10', bands = "".join(filters))
+    im_fits, jpeg = get_image_fits(center.ra.value, center.dec.value, wpx, downsize=downsize, LSversion = 'ls-dr10', bands = "".join(filters))
+    with open(".".join(file_name.split('.')[:-1] + ['jpg']), 'wb') as f:
+        f.write(jpeg.content)
     im_fits.writeto(file_name, overwrite=True)  # save / overwrite galaxy image
     im_fits.close()
 else:
