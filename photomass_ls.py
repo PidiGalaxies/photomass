@@ -76,6 +76,8 @@ parser.add_argument("--dist", help="galaxy distance in Mcp", action="store", def
 parser.add_argument("--coordinates", help="comma seperated coordinates: RA,DEC with unints (default units are deg); requires --dist", action="store", default=None)
 parser.add_argument("--additional-filters", help="other filters without delimiter (e.g. 'zi')", action="store", default='')
 parser.add_argument("--plot", help="plot png image of source data and masked data", action="store_true")
+parser.add_argument("--K", '-K', help="apply K correction", action="store_true")
+parser.add_argument("--redshift", help="galaxy redshift - overrides the one dowloaded from NED", action="store", default=None)
 
 args = parser.parse_args()
 filters = ['g', 'r']  + list(args.additional_filters)
@@ -117,6 +119,15 @@ if args.dist is None:
 else:
     dist = float(args.dist)
     dist_type = '(from input)'
+
+if args.redshift is not None:
+    try:
+        redshift = float(args.redshift)
+    except:
+        raise(Exception("redshift has to be a float"))
+else:
+    redshift = ned['redshift']
+
 obj_r =  args.radius # e.g. amaj(arcsec) Semi-major axis at level {mu}(3.6um)=25.5mag(AB)/arcsec^2^[ucd=phys.angSize.smajAxis]
 r_fac = 2.5
 ls_scale = 0.262 #LS default plate scale 0.262 arcsec/pixel
@@ -355,15 +366,49 @@ Please delete all galfit ouputs! - (rm galfit.*)''')
     #Rename galfit output to unique name!
     os.rename('galfit.01', obj_name + '_' + band + '.galfit')
 
+### redshift correction
+
+if args.K and not np.isnan(redshift):
+
+    M_ggr =  [
+             [0,0,0,0],
+             [-2.45204,4.10188,10.5258,-13.5889],
+             [56.7969,-140.913,144.572,57.2155],
+             [-466.949,222.789,-917.46,-78.0591],
+             [2906.77,1500.8,1689.97,30.889],
+             [-10453.7,-4419.56,-1011.01,0],
+             [17568,3236.68,0,0],
+             [-10820.7,0,0,0]]
+
+    M_rgr =  [
+             [0,0,0,0],
+             [1.83285,-2.71446,4.97336,-3.66864],
+             [-19.7595,10.5033,18.8196,6.07785],
+             [33.6059,-120.713,-49.299,0],
+             [144.371,216.453,0,0],
+             [-295.39,0,0,0]]
+
+    z_g = 0
+    z_r = 0
+    color = magnitudes['g'] - magnitudes['r']
+    for _ in range(4):
+        for __ in range(4):
+            z_g += M_ggr[_][__] * redshift**_ * (color)**__
+            z_r += M_rgr[_][__] * redshift**_ * (color)**__
+    print('Applying K correction: g:', '{:.2g}'.format(z_g), 'r:','{:.2g}'.format(z_r))
+    magnitudes['g'] -= z_g
+    magnitudes['r'] -= z_r
+
+
 print("Galaxy:", obj_name)
-print("RA:", "{:4g}".format(center.ra.deg), "Dec:", "{:4g}".format(center.dec.deg))
-print("log10(M*[Sun]):"      , "{:4g}".format(0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996 ))
-print('Ext[mag]:'            , " ".join([band + ' : ' + "{:4g}".format(ned[band])            for band in filters]))
-print('Mag[mag]:'            , " ".join([band + ' : ' + "{:4g}".format(magnitudes[band])     for band in filters]))
-print('Sersic index:'        , " ".join([band + ' : ' + "{:4g}".format(Ser_index[band])      for band in filters]))
-print('R_e[px]:'             , " ".join([band + ' : ' + "{:4g}".format(R_e[band])            for band in filters]))
-print('R_e[arcsec]:'         , " ".join([band + ' : ' + "{:4g}".format(R_e_arcsec[band])     for band in filters]))
-print('Axis ratio:'          , " ".join([band + ' : ' + "{:4g}".format(axis_ratio[band])     for band in filters]))
-print('Position angle[deg]:' , " ".join([band + ' : ' + "{:4g}".format(position_angle[band]) for band in filters]))
+print("RA:", "{:4g}".format(center.ra.deg), "Dec:", "{:.4g}".format(center.dec.deg))
+print("log10(M*[Sun]):"      , "{:.4g}".format(0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996 ))
+print('Ext[mag]:'            , " ".join([band + ' : ' + "{:.4g}".format(ned[band])            for band in filters]))
+print('Mag[mag]:'            , " ".join([band + ' : ' + "{:.4g}".format(magnitudes[band])     for band in filters])) # after all the corrections!
+print('Sersic index:'        , " ".join([band + ' : ' + "{:.4g}".format(Ser_index[band])      for band in filters]))
+print('R_e[px]:'             , " ".join([band + ' : ' + "{:.4g}".format(R_e[band])            for band in filters]))
+print('R_e[arcsec]:'         , " ".join([band + ' : ' + "{:.4g}".format(R_e_arcsec[band])     for band in filters]))
+print('Axis ratio:'          , " ".join([band + ' : ' + "{:.4g}".format(axis_ratio[band])     for band in filters]))
+print('Position angle[deg]:' , " ".join([band + ' : ' + "{:.4g}".format(position_angle[band]) for band in filters]))
 print('Distance[Mpc]:', "{:4g}".format(dist), dist_type)
-print('Redshift:', 'N/A' if np.isnan(ned['redshift']) else "{:4g}".format(ned['redshift']))
+print('Redshift:', 'N/A' if np.isnan(redshift) else "{:4g}".format(redshift))

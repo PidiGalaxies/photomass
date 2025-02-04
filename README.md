@@ -37,13 +37,14 @@ pip3 install "numpy<2.0" scipy SEP astropy requests
 The script uses [NED](ned.ipac.caltech.edu) and [`get_icrs_coordinates` from `astropy`](cds.unistra.fr) to get galactic extinctions and coordinates for the given galaxy.
 If the object is not present in these databases corresponding exception will be raised.
 You can use custom coordinates with `--coordinates` option to circumvent this limitation.
+K correction is limited to redshift < 0.5 as well as other limitations of [K-correction caluclator](kcor.sai.msu.ru)
 
 
 ## Running the script
 You can run the script to get list of options with descriptions like this:
 ```
 $ ./photomass_ls.py -h
-usage: photomass_ls.py [-h] [--refetch] [--galpath GALPATH] [--dist DIST] [--coordinates COORDINATES] [--additional-filters ADDITIONAL_FILTERS] [--plot] OBJECT radius
+usage: photomass_ls.py [-h] [--refetch] [--galpath GALPATH] [--dist DIST] [--coordinates COORDINATES] [--additional-filters ADDITIONAL_FILTERS] [--plot] [--K] [--redshift REDSHIFT] OBJECT radius
 
 computes a stellar mass estimate for a given galaxy based on GALFIT photometry with Legacy Surveys data
 
@@ -61,6 +62,8 @@ options:
   --additional-filters ADDITIONAL_FILTERS
                         other filters without delimiter (e.g. 'zi')
   --plot                plot png image of source data and masked data
+  --K, -K               apply K correction
+  --redshift REDSHIFT   galaxy redshift - overrides the one dowloaded from NED
 ```
 
 The numerical outpus are printed to stdout. For example:
@@ -96,9 +99,9 @@ The next set of variables is calculated for different filters:
  - `Axis ratio`: axis ratio of the GALFIT model
  - `Position angle`: positioning angle of the GALFIT model (North=0, East=90)
 
-`Distance`: value from input or from redshift (using WMAP9 model from astropy)
+`Distance`: value from input or from NED redshift (using WMAP9 model from astropy)
 
-`Redshift`: redshift from NED
+`Redshift`: redshift used for K correction. From command line or NED.
 
 
 Example with using coordinate:
@@ -124,8 +127,29 @@ Redshift:  N/A
 Here the `OBJECT` is not converted to uppercase, redshift is not recived from database and so it is not available. 
 > Warning: the script checks if the file (filename) with data from legacy survey is present - there is no idication of coordinates in the filename, so you have to use `--refetch`, if you want to use same object name with different coordinates.
 
+Example with K correction:
+```
+$photomass/photomass_ls.py ngc474 106.3  --dist 30.88 --galpath  --K --redshift 0.00794
+Using existing FITS from the local directory
+Applying K correction: g: 0.0088 r: 0.008
+Galaxy: NGC474
+RA: 20.0279 Dec: 3.416
+log10(M*[Sun]): 10.79
+Ext[mag]: g : 0.112 r : 0.075
+Mag[mag]: g : -20.51 r : -21.3
+Sersic index: g : 3.049 r : 3.872
+R_e[px]: g : 44.73 r : 48.04
+R_e[arcsec]: g : 23.44 r : 25.17
+Axis ratio: g : 0.8185 r : 0.8188
+Position angle[deg]: g : 21.18 r : 19.1
+Distance[Mpc]: 30.88 (from input)
+Redshift: 0.00794
+```
+this example is with data from LS already present in the diractory.
+
 The script also saves these files:
  - downloaded FITS - with file name : `<object_name>_<downsize>_<size>px_ls-dr10_<filters>.fits`
+ - jpeg with same filters downloaded from LS - with file name : `<object_name>_<downsize>_<size>px_ls-dr10_<filters>.jpg`
  - single-filter data: `<object_name>_<filter>.fit`
  - image mask for the respective filter: `<object_name>_<filter>_mask.fit`
  - input file for GALFIT: `<object_name>_<filter>_gal.inp`
@@ -135,3 +159,4 @@ The script also saves these files:
 ## Acknowledgements
 
 This project has received funding from the European Union's Horizon Europe Research and Innovation programme under the Marie Skłodowska-Curie grant agreement No. 101067618, GalaxyMergers.
+This research has made use of the *K-corrections calculator* [service](kcor.sai.msu.ru) and the NASA/IPAC Extragalactic Database, which is funded by the National Aeronautics and Space Administration and operated by the California Institute of Technology.
