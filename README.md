@@ -37,7 +37,7 @@ pip3 install "numpy<2.0" scipy SEP astropy requests
 The script uses [NED](ned.ipac.caltech.edu) and [`get_icrs_coordinates` from `astropy`](cds.unistra.fr) to get galactic extinctions and coordinates for the given galaxy.
 If the object is not present in these databases corresponding exception will be raised.
 You can use custom coordinates with `--coordinates` option to circumvent this limitation.
-K correction is limited to redshift < 0.5 as well as other limitations of [K-correction caluclator](kcor.sai.msu.ru)
+K correction is limited to redshift < 0.5 as well as other limitations of [K-correction caluclator](http://kcor.sai.msu.ru).
 
 
 ## Running the script
@@ -159,4 +159,5 @@ The script also saves these files:
 ## Acknowledgements
 
 This project has received funding from the European Union's Horizon Europe Research and Innovation programme under the Marie Skłodowska-Curie grant agreement No. 101067618, GalaxyMergers.
-This research has made use of the *K-corrections calculator* [service](kcor.sai.msu.ru) and the NASA/IPAC Extragalactic Database, which is funded by the National Aeronautics and Space Administration and operated by the California Institute of Technology.
+This research has made use of the *K-corrections calculator* service
+http://kcor.sai.msu.ru and the NASA/IPAC Extragalactic Database, which is funded by the National Aeronautics and Space Administration and operated by the California Institute of Technology.
