@@ -10,6 +10,8 @@ from scipy.ndimage import gaussian_filter
 import os
 import requests
 
+ls_scale = 0.262 #LS default plate scale 0.262 arcsec/pixel
+
 def get_image_fits(ra, dec, wpx, downsize, LSversion='ls-dr9',bands="grz" ):
     '''
     Gets fits from legacy survay - details at https://www.legacysurvey.org/dr9/description/
@@ -21,7 +23,7 @@ def get_image_fits(ra, dec, wpx, downsize, LSversion='ls-dr9',bands="grz" ):
         band (str) : string with bands to be downloaded - available are g, r, z, i; default="grz"
     '''
     # https://www.legacysurvey.org/dr9/description/
-    ps = 0.262 * downsize # Pixscale=0.262 will return (approximately) the native pixels
+    ps = ls_scale * downsize # Pixscale=0.262 will return (approximately) the native pixels
 
     url_base = "https://www.legacysurvey.org/viewer/fits-cutout?"
     param = ''
@@ -130,7 +132,6 @@ else:
 
 obj_r =  args.radius # e.g. amaj(arcsec) Semi-major axis at level {mu}(3.6um)=25.5mag(AB)/arcsec^2^[ucd=phys.angSize.smajAxis]
 r_fac = 2.5
-ls_scale = 0.262 #LS default plate scale 0.262 arcsec/pixel
 wpx = 1024 # The maximum size for cutouts (in number of pixels) is currently 512 # currently more!!
 
 downsize = int(2 * r_fac * obj_r / ls_scale / wpx + 0.5) # with respect to the default plate scale of 0.262 arcsec/pixel
@@ -240,7 +241,7 @@ for i, band in zip(range(len(filters)), filters):
     ymin = 0
     ymax = wpx - 1
 
-    plate_scale = 0.262 * downsize # arcsec/pixel
+    plate_scale = ls_scale * downsize # arcsec/pixel
 
     mag = -2.5 * np.log10(objects['flux'][mainobj_no - 1]) + ZP
     a     = objects['a']    [mainobj_no - 1]
@@ -411,4 +412,6 @@ print('R_e[arcsec]:'         , " ".join([band + ' : ' + "{:.4g}".format(R_e_arcs
 print('Axis ratio:'          , " ".join([band + ' : ' + "{:.4g}".format(axis_ratio[band])     for band in filters]))
 print('Position angle[deg]:' , " ".join([band + ' : ' + "{:.4g}".format(position_angle[band]) for band in filters]))
 print('Distance[Mpc]:', "{:4g}".format(dist), dist_type)
+print('Plate scale[arcsec / px]:', "{:.4g}".format(px_to_ang_dx), "{:.4g}".format(px_to_ang_dy))
+print('Zero point[mag]:', "{:.4g}".format(ZP))
 print('Redshift:', 'N/A' if np.isnan(redshift) else "{:4g}".format(redshift))

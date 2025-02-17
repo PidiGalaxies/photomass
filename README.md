@@ -82,6 +82,8 @@ R_e[arcsec]: g : 23.4368 r : 25.1743
 Axis ratio: g : 0.8185 r : 0.8188
 Position angle[deg]: g : 21.1833 r : 19.0952
 Distance[Mpc]: 30.88 (from input)
+Plate scale[arcsec / px]: 0.524 0.524
+Zero point[mag]: 20.99
 Redshift: 0.007722
 ```
 where:
@@ -121,6 +123,8 @@ R_e[arcsec]: g : 36.1081 r : 34.6975
 Axis ratio: g : 0.8257 r : 0.8142
 Position angle[deg]: g : 14.7853 r : 16.299
 Distance[Mpc]: 30.88 (from input)
+Plate scale[arcsec / px]: 0.524 0.524
+Zero point[mag]: 20.99
 Redshift:  N/A
 
 ```
@@ -143,6 +147,8 @@ R_e[arcsec]: g : 23.44 r : 25.17
 Axis ratio: g : 0.8185 r : 0.8188
 Position angle[deg]: g : 21.18 r : 19.1
 Distance[Mpc]: 30.88 (from input)
+Plate scale[arcsec / px]: 0.524 0.524
+Zero point[mag]: 20.99
 Redshift: 0.00794
 ```
 this example is with data from LS already present in the diractory.
