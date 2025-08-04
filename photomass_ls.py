@@ -87,10 +87,20 @@ if args.coordinates is not None:
     obj_split = args.coordinates.split(',')
     # this is not object, but coordinates
     if args.dist is None:
-        print()
-        print('When using coordinated distance is required, please add `--dist distance`')
-        print()
-        sys.exit(1)
+        if args.redshift is None:
+            print()
+            print('When using coordinated distance is required, please add `--dist distance`')
+            print()
+            sys.exit(1)
+        else:
+            from astropy.cosmology import WMAP9
+            try:
+                redshift = float(args.redshift)
+            except:
+                raise(Exception("redshift has to be a float"))
+            dist = WMAP9.comoving_distance(redshift).value #distance in Mpc
+            dist_type = '(from inputted redshift)'
+            
     try:
         try:
             ra = float(obj_split[0])
@@ -114,13 +124,14 @@ else:
     ned = harvest_ned(obj_name)
     center = get_icrs_coordinates(obj_name)
 
-if args.dist is None:
-    from astropy.cosmology import WMAP9
-    dist = WMAP9.comoving_distance(ned['redshift']).value #distance in Mpc
-    dist_type = '(from redshift)'
-else:
-    dist = float(args.dist)
-    dist_type = '(from input)'
+if 'dist' not in globals():
+    if args.dist is None:
+        from astropy.cosmology import WMAP9
+        dist = WMAP9.comoving_distance(ned['redshift']).value #distance in Mpc
+        dist_type = '(from redshift)'
+    else:
+        dist = float(args.dist)
+        dist_type = '(from input)'
 
 if args.redshift is not None:
     try:
@@ -176,7 +187,7 @@ for i, band in zip(range(len(filters)), filters):
 
     im = im_fits[0].data
     if len(im) == 0 or np.all(im==0):
-        print('do data for band:', band)
+        print('No data for band:', band)
         filters.remove(band)
         continue
 
@@ -369,7 +380,11 @@ Please delete all galfit ouputs! - (rm galfit.*)''')
 
 ### redshift correction
 
+print("Galaxy:", obj_name)
 if args.K and not np.isnan(redshift):
+
+    print("Mag_without_K-correction[Mag]:", 'g:' , "{:.4g}".format(magnitudes['g']), "r:", "{:.4g}".format(magnitudes['r']))
+#    print("log10(M_withoutKkor*[Sun]):"      , "{:.4g}".format(0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996 ))
 
     M_ggr =  [
              [0,0,0,0],
@@ -392,18 +407,19 @@ if args.K and not np.isnan(redshift):
     z_g = 0
     z_r = 0
     color = magnitudes['g'] - magnitudes['r']
-    for _ in range(4):
-        for __ in range(4):
+    for _ in range(len(M_ggr)):
+        for __ in range(len(M_ggr[0]) ):
             z_g += M_ggr[_][__] * redshift**_ * (color)**__
+    for _ in range(len(M_rgr)):
+        for __ in range(len(M_rgr[0]) ):
             z_r += M_rgr[_][__] * redshift**_ * (color)**__
     print('Applying K correction: g:', '{:.2g}'.format(z_g), 'r:','{:.2g}'.format(z_r))
     magnitudes['g'] -= z_g
     magnitudes['r'] -= z_r
 
 
-print("Galaxy:", obj_name)
 print("RA:", "{:4g}".format(center.ra.deg), "Dec:", "{:.4g}".format(center.dec.deg))
-print("log10(M*[Sun]):"      , "{:.4g}".format(0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996 ))
+print("log10(M*[Sun]):"      , "E:", "{:.4g}".format(0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996), "M:", "{:.4g}". format(0.582 * magnitudes['g'] - 1.023 * magnitudes['r'] + 0.992), "Q:", "{:.4g}".format(0.627 * magnitudes['g'] - 1.065 * magnitudes['r'] + 1.062) )
 print('Ext[mag]:'            , " ".join([band + ' : ' + "{:.4g}".format(ned[band])            for band in filters]))
 print('Mag[mag]:'            , " ".join([band + ' : ' + "{:.4g}".format(magnitudes[band])     for band in filters])) # after all the corrections!
 print('Sersic index:'        , " ".join([band + ' : ' + "{:.4g}".format(Ser_index[band])      for band in filters]))

@@ -72,15 +72,15 @@ $./photomass_ls.py NGC474 106.3 --dist 30.88
 Downloading https://www.legacysurvey.org/viewer/fits-cutout?ra=20.02786271688&dec=3.41551721475&height=1024&width=1024&layer=ls-dr10&pixscale=0.524&bands=gr
 |===========================================================================================================================| 8.3M/8.3M (100.00%)         2s
 Galaxy: NGC474
-RA: 20.0233 deg Dec: 3.4143 deg
-log10(M*[Sun]): 10.7895
+RA: 20.0279 Dec: 3.416
+log10(M*[Sun]): E: 10.79 M: 10.84 Q: 10.88
 Ext[mag]: g : 0.112 r : 0.075
-Mag[mag]: g : -20.5046 r : -21.2934
-Sersic index: g : 3.0489 r : 3.872
-R_e[px]: g : 44.7267 r : 48.0426
-R_e[arcsec]: g : 23.4368 r : 25.1743
+Mag[mag]: g : -20.5 r : -21.29
+Sersic index: g : 3.049 r : 3.872
+R_e[px]: g : 44.73 r : 48.04
+R_e[arcsec]: g : 23.44 r : 25.17
 Axis ratio: g : 0.8185 r : 0.8188
-Position angle[deg]: g : 21.1833 r : 19.0952
+Position angle[deg]: g : 21.18 r : 19.1
 Distance[Mpc]: 30.88 (from input)
 Plate scale[arcsec / px]: 0.524 0.524
 Zero point[mag]: 20.99
@@ -91,15 +91,16 @@ where:
 
 `RA`, `Dec`: coordinates of the `OBJECT` in deg
 
-`log(M*[Msun])`: the estimate of the logarithm of the galaxy stellar mass computed by Eq(1) of Ebrova et al. (2025), where Msun is the sollar masses.
+`log(M*[Msun])`: the estimate of the logarithm of the galaxy stellar mass computed by Eq(1) of Ebrova et al. (2025), where Msun is the sollar masses using calibrations - E: Eskew et al. (2012), M: Meidt et al. (2014), Q: Querejeta et al. (2015)
 
 The next set of variables is calculated for different filters:
  - `Ext`: Galactic extinctions in DES filters from Schlafly & Finkbeiner (2011) using NASA/IPAC Extragalactic Database (NED)
- - `Mag`: extinction-correlated absolute magnitude calculated from the galaxy distance and the GLAFIT Integrated magnitude
+ - `Mag`: extinction-correlated absolute magnitude calculated from the galaxy distance and the GLAFIT Integrated magnitude (includes K-correction with option --K)
  - `Sersic index`: Sersic index of the GALFIT model
  - `R_e`: effective radius of the GALFIT model - in pixels and arcsec
  - `Axis ratio`: axis ratio of the GALFIT model
  - `Position angle`: positioning angle of the GALFIT model (North=0, East=90)
+ - `Mag_without_K-correction`: extinction-correlated absolute magnitude calculated from the galaxy distance and the GLAFIT Integrated magnitude before K-correction
 
 `Distance`: value from input or from NED redshift (using WMAP9 model from astropy)
 
@@ -113,32 +114,32 @@ https://www.legacysurvey.org/viewer/fits-cutout?ra=20.0233&dec=3.4143&height=102
 Downloading https://www.legacysurvey.org/viewer/fits-cutout?ra=20.0233&dec=3.4143&height=1024&width=1024&layer=ls-dr10&pixscale=0.524&bands=gr
 |===============================================================================================================================================================================================================================================================| 8.3M/8.3M (100.00%)         1s
 Galaxy: ngc474
-RA: 20.0233 Dec: 3.4143
-log10(M*[Sun]): 10.7189
+RA: 20.0233 Dec: 3.414
+log10(M*[Sun]): E: 10.72 M: 10.77 Q: 10.81
 Ext[mag]: g : 0.112 r : 0.075
-Mag[mag]: g : -20.3159 r : -21.1151
-Sersic index: g : 1.2733 r : 1.9287
-R_e[px]: g : 68.9085 r : 66.2166
-R_e[arcsec]: g : 36.1081 r : 34.6975
+Mag[mag]: g : -20.32 r : -21.12
+Sersic index: g : 1.273 r : 1.929
+R_e[px]: g : 68.91 r : 66.22
+R_e[arcsec]: g : 36.11 r : 34.7
 Axis ratio: g : 0.8257 r : 0.8142
-Position angle[deg]: g : 14.7853 r : 16.299
+Position angle[deg]: g : 14.79 r : 16.3
 Distance[Mpc]: 30.88 (from input)
 Plate scale[arcsec / px]: 0.524 0.524
 Zero point[mag]: 20.99
-Redshift:  N/A
-
+Redshift: N/A
 ```
 Here the `OBJECT` is not converted to uppercase, redshift is not recived from database and so it is not available. 
 > Warning: the script checks if the file (filename) with data from legacy survey is present - there is no idication of coordinates in the filename, so you have to use `--refetch`, if you want to use same object name with different coordinates.
 
 Example with K correction:
 ```
-$photomass/photomass_ls.py ngc474 106.3  --dist 30.88 --galpath  --K --redshift 0.00794
+$photomass/photomass_ls.py ngc474 106.3  --dist 30.88 --galpath /path/to/galfit/ --K --redshift 0.00794
 Using existing FITS from the local directory
-Applying K correction: g: 0.0088 r: 0.008
 Galaxy: NGC474
+Mag_without_K-correction[Mag]: g: -20.5 r: -21.29
+Applying K correction: g: 0.0085 r: 0.0078
 RA: 20.0279 Dec: 3.416
-log10(M*[Sun]): 10.79
+log10(M*[Sun]): E: 10.79 M: 10.84 Q: 10.89
 Ext[mag]: g : 0.112 r : 0.075
 Mag[mag]: g : -20.51 r : -21.3
 Sersic index: g : 3.049 r : 3.872
@@ -149,7 +150,7 @@ Position angle[deg]: g : 21.18 r : 19.1
 Distance[Mpc]: 30.88 (from input)
 Plate scale[arcsec / px]: 0.524 0.524
 Zero point[mag]: 20.99
-Redshift: 0.00794
+Redshift: 0.007722
 ```
 this example is with data from LS already present in the diractory.
 
