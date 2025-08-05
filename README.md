@@ -91,7 +91,7 @@ where:
 
 `RA`, `Dec`: coordinates of the `OBJECT` in deg
 
-`log(M*[Msun])`: the estimate of the logarithm of the galaxy stellar mass computed by Eq(1) of Ebrova et al. (2025), where Msun is the sollar masses using calibrations - E: Eskew et al. (2012), M: Meidt et al. (2014), Q: Querejeta et al. (2015)
+`log(M*[Msun])`: the estimate of the logarithm of the galaxy stellar mass computed by Eq(1) of Ebrova et al. (2025), where Msun is the sollar masses, using calibrations - E: Eskew et al. (2012), M: Meidt et al. (2014), Q: Querejeta et al. (2015)
 
 The next set of variables is calculated for different filters:
  - `Ext`: Galactic extinctions in DES filters from Schlafly & Finkbeiner (2011) using NASA/IPAC Extragalactic Database (NED)
