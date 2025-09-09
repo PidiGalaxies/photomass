@@ -165,6 +165,7 @@ The script also saves these files:
 
 ## Acknowledgements
 
-This project has received funding from the European Union's Horizon Europe Research and Innovation programme under the Marie Skłodowska-Curie grant agreement No. 101067618, GalaxyMergers.
+Funded by the European Union under the Marie Skłodowska-Curie grant agreement No. 101067618 (GalaxyMergers). Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or European Research Executive Agency (REA). Neither the European Union nor REA can be held responsible for them.
+
 This research has made use of the *K-corrections calculator* service
 http://kcor.sai.msu.ru and the NASA/IPAC Extragalactic Database, which is funded by the National Aeronautics and Space Administration and operated by the California Institute of Technology.
