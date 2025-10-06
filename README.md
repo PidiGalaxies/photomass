@@ -12,7 +12,8 @@ input files with well-assessed initial values, performs the GALFIT photometry, a
 If you use this code in your research or projects, please cite the following accompanied paper:
 
 Ebrová, Bílek, & Eliášek: "Photometric stellar masses for galaxies in DESI Legacy Imaging
-Surveys" (2025; submitted)
+Surveys" (2025; accepted for publication in Astronomy & Astrophysics; arXiv:2510.02257); 
+https://ui.adsabs.harvard.edu/abs/2025arXiv251002257E/abstract 
 
 
 ## Requirements
