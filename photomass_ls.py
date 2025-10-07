@@ -115,7 +115,7 @@ if args.coordinates is not None:
     except:
         raise(Exception("Failed to read input"))
     center = SkyCoord(ra=ra, dec=dec, frame='icrs')
-    ned = harvest_ned_coord({'ra':ra.hour, 'dec':dec.deg})
+    ned = harvest_ned_coord({'ra':center.ra.hour, 'dec':center.dec.deg})
     ned['redshift'] = np.nan
     obj_name = args.OBJECT
 
