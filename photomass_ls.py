@@ -10,6 +10,8 @@ from scipy.ndimage import gaussian_filter
 import os
 import requests
 
+from contextlib import redirect_stdout
+
 ls_scale = 0.262 #LS default plate scale 0.262 arcsec/pixel
 
 def get_image_fits(ra, dec, wpx, downsize, LSversion='ls-dr9',bands="grz" ):
@@ -35,7 +37,8 @@ def get_image_fits(ra, dec, wpx, downsize, LSversion='ls-dr9',bands="grz" ):
     param += "&pixscale=" + str(ps)
     param += "&bands="    + bands
 
-    image_fits = fits.open(url_base + param, cache=False)
+    with redirect_stdout(sys.stderr):
+        image_fits = fits.open(url_base + param, cache=False)
 
 
     url_base = "https://www.legacysurvey.org/viewer/jpeg-cutout?"
@@ -56,9 +59,16 @@ def harvest_ned(_id):
     x = requests.get('https://ned.ipac.caltech.edu/cgi-bin/gmd?uplist=' + oid.decode('ascii') + '&delimiter=bar&nondb=user_objname&position=z&SchEXT=DES+r&SchEXT=DES+g&SchEXT=DES+z')
     data = [z for z in x.content.split(b'\n') if oid in z ]
     if len(data) == 0:
-        raise(Exception("Failed to get data for "+ _id + " from NED"))
+        raise(Exception("Failed to get data (galactic extinction and redshift) for object '"+ _id + "' from NED\n Try using options --coordinates and --dist (or --redshift)"))
     data = data[0].split(b'|') # the line with values starts with oid and is deliminated by '|'
-    return {'g':float(data[1]), 'r':float(data[2]),'z':float(data[3]),'redshift':float(data[4])}
+    out = {}
+    for key, i in zip(['g', 'r', 'z', 'redshift'], [1, 2, 3, 4]):
+        try:
+            out[key] = float(data[i])
+        except:
+            out[key] = np.nan
+            print("No data for", key, "obtained from NED", file=sys.stderr)
+    return out
 
 def harvest_ned_coord(coords):
     req = requests.get('https://ned.ipac.caltech.edu/cgi-bin/calc?in_csys=Equatorial&in_equinox=J2000.0&obs_epoch=2000.0&lon=' + str(coords['ra']) + '&lat=' + str(coords['dec']) + '&pa=0.0&out_csys=Equatorial&out_equinox=J2000.0')
@@ -73,7 +83,7 @@ parser = ArgumentParser(description="computes a stellar mass estimate for a give
 parser.add_argument("OBJECT", help="name of the galaxy for which the stellar mass estimate is done")
 parser.add_argument("radius", help="approximate galaxy angular size in arcseconds (e.g. semi-major axis at SB=25.5mag/arcsec^2 in the Spitzer 3.6 micron filter)", type=float)
 parser.add_argument("--refetch", help="re-download and re-analyse image even if a local copy exists", action="store_true")
-parser.add_argument("--galpath", help="path to galfit64 binary; if not set, $PATH is searched", action="store", default="")
+parser.add_argument("--galpath", help="path to galfit(64) binary; if not set, $PATH is searched", action="store", default="")
 parser.add_argument("--dist", help="galaxy distance in Mcp", action="store", default=None)
 parser.add_argument("--coordinates", help="comma seperated coordinates: RA,DEC with unints (default units are deg); requires --dist", action="store", default=None)
 parser.add_argument("--additional-filters", help="other filters without delimiter (e.g. 'zi')", action="store", default='')
@@ -88,9 +98,9 @@ if args.coordinates is not None:
     # this is not object, but coordinates
     if args.dist is None:
         if args.redshift is None:
-            print()
-            print('When using coordinated distance is required, please add `--dist distance`')
-            print()
+            print(file=sys.stderr)
+            print('When using coordinated distance is required, please add `--dist distance`', file=sys.stderr)
+            print(file=sys.stderr)
             sys.exit(1)
         else:
             from astropy.cosmology import WMAP9
@@ -126,9 +136,12 @@ else:
 
 if 'dist' not in globals():
     if args.dist is None:
-        from astropy.cosmology import WMAP9
-        dist = WMAP9.comoving_distance(ned['redshift']).value #distance in Mpc
-        dist_type = '(from redshift)'
+        if np.isnan(ned['redshift']):
+            dist = np.nan
+        else:
+            from astropy.cosmology import WMAP9
+            dist = WMAP9.comoving_distance(ned['redshift']).value #distance in Mpc
+            dist_type = '(from redshift)'
     else:
         dist = float(args.dist)
         dist_type = '(from input)'
@@ -140,6 +153,9 @@ if args.redshift is not None:
         raise(Exception("redshift has to be a float"))
 else:
     redshift = ned['redshift']
+
+if np.isnan(dist):
+    raise(Exception("distance cannot be obtained from redshift (NED), please specify it with option --dist"))
 
 obj_r =  args.radius # e.g. amaj(arcsec) Semi-major axis at level {mu}(3.6um)=25.5mag(AB)/arcsec^2^[ucd=phys.angSize.smajAxis]
 r_fac = 2.5
@@ -160,7 +176,7 @@ if not os.path.isfile(file_name) or args.refetch:
     im_fits.writeto(file_name, overwrite=True)  # save / overwrite galaxy image
     im_fits.close()
 else:
-    print('Using existing FITS from the local directory')
+    print('Using existing FITS from the local directory', file=sys.stderr)
 
 magnitudes     = {}
 Ser_index      = {}
@@ -347,9 +363,12 @@ Please delete all galfit ouputs! - (rm galfit.*)''')
         raise
     if len(args.galpath) > 0 and args.galpath[-1] != '/':
         args.galpath += '/'
-
-    if os.system(args.galpath + 'galfit64 ' + gal_im + ' >/dev/null'):
-        raise Exception('Problem executing galfit64!')
+    if os.path.isfile(args.galpath + 'galfit64'):
+        binary = 'galfit64'
+    else:
+        binary = 'galfit'
+    if os.system(args.galpath + binary + ' ' + gal_im + ' >/dev/null'):
+        raise Exception('Problem executing galfit / galfit64!')
 
     #Parse galfit output
     with open('galfit.01') as f:
