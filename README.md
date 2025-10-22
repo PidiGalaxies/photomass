@@ -36,9 +36,9 @@ pip3 install "numpy<2.0" scipy SEP astropy requests
 
 ## Limitations
 The script uses [NED](ned.ipac.caltech.edu) and [`get_icrs_coordinates` from `astropy`](cds.unistra.fr) to get galactic extinctions and coordinates for the given galaxy.
-If the object is not present in these databases corresponding exception will be raised.
+If the object is not present in these databases the corresponding exception will be raised.
 You can use custom coordinates with `--coordinates` option to circumvent this limitation.
-K correction is limited to redshift < 0.5 as well as other limitations of [K-correction caluclator](http://kcor.sai.msu.ru).
+K correction is limited to redshift < 0.5 as well as other limitations of the [K-correction calculator](http://kcor.sai.msu.ru).
 
 
 ## Running the script
@@ -67,7 +67,7 @@ options:
   --redshift REDSHIFT   galaxy redshift - overrides the one dowloaded from NED
 ```
 
-The numerical outpus are printed to stdout. For example:
+The numerical outputs are printed to stdout. For example:
 ```
 $./photomass_ls.py NGC474 106.3 --dist 30.88
 Downloading https://www.legacysurvey.org/viewer/fits-cutout?ra=20.02786271688&dec=3.41551721475&height=1024&width=1024&layer=ls-dr10&pixscale=0.524&bands=gr
@@ -88,7 +88,7 @@ Zero point[mag]: 20.99
 Redshift: 0.007722
 ```
 where:
-`Galaxy`: `OBJECT` (converted to upper case if no coordinate are specified)
+`Galaxy`: `OBJECT` (converted to upper case if no coordinates are specified)
 
 `RA`, `Dec`: coordinates of the `OBJECT` in deg
 
@@ -105,7 +105,7 @@ The next set of variables is calculated for different filters:
 
 `Distance`: value from input or from NED redshift (using WMAP9 model from astropy)
 
-`Redshift`: redshift used for K correction. From command line or NED.
+`Redshift`: redshift used for K correction. From the command line or NED.
 
 
 Example with using coordinate:
@@ -129,7 +129,7 @@ Plate scale[arcsec / px]: 0.524 0.524
 Zero point[mag]: 20.99
 Redshift: N/A
 ```
-Here the `OBJECT` is not converted to uppercase, redshift is not recived from database and so it is not available. 
+Here the `OBJECT` is not converted to uppercase, redshift is not received from the database and so it is not available. 
 > Warning: the script checks if the file (filename) with data from legacy survey is present - there is no idication of coordinates in the filename, so you have to use `--refetch`, if you want to use same object name with different coordinates.
 
 Example with K correction:
