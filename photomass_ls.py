@@ -10,9 +10,30 @@ from scipy.ndimage import gaussian_filter
 import os
 import requests
 
-from contextlib import redirect_stdout
+from contextlib import redirect_stdout, contextmanager
+class _Tee:
+    def __init__(self, *files):
+        self.files = files
+    def write(self, x):
+        ret = []
+        for f in self.files:
+            ret += [f.write(x)]
+        return min(ret)
+    def flush(self):
+        for f in self.files:
+            f.flush()
+@contextmanager
+def tee(filename):
+    try:
+        with open(filename, 'w') as f:
+            yield _Tee(sys.stdout, f)
+    finally:
+        pass
+
+
 
 ls_scale = 0.262 #LS default plate scale 0.262 arcsec/pixel
+outfile_sufix = '_photomass.out'
 
 def get_image_fits(ra, dec, wpx, downsize, LSversion='ls-dr9',bands="grz" ):
     '''
@@ -39,7 +60,6 @@ def get_image_fits(ra, dec, wpx, downsize, LSversion='ls-dr9',bands="grz" ):
 
     with redirect_stdout(sys.stderr):
         image_fits = fits.open(url_base + param, cache=False)
-
 
     url_base = "https://www.legacysurvey.org/viewer/jpeg-cutout?"
 
@@ -92,6 +112,7 @@ parser.add_argument("--K", '-K', help="apply K correction", action="store_true")
 parser.add_argument("--redshift", help="galaxy redshift - overrides the one dowloaded from NED", action="store", default=None)
 
 args = parser.parse_args()
+
 filters = ['g', 'r']  + list(args.additional_filters)
 if args.coordinates is not None:
     obj_split = args.coordinates.split(',')
@@ -203,7 +224,7 @@ for i, band in zip(range(len(filters)), filters):
 
     im = im_fits[0].data
     if len(im) == 0 or np.all(im==0):
-        print('No data for band:', band)
+        print('No data for band:', band, file=sys.stderr)
         filters.remove(band)
         continue
 
@@ -359,7 +380,7 @@ for i, band in zip(range(len(filters)), filters):
     #Tests if galfit ouputs exists - there should not be any galfit.* files!
     if os.path.isfile('galfit.*'):
         print('''File galfit.* exists!
-Please delete all galfit ouputs! - (rm galfit.*)''')
+Please delete all galfit ouputs! - (rm galfit.*)''', file=sys.stderr)
         raise
     if len(args.galpath) > 0 and args.galpath[-1] != '/':
         args.galpath += '/'
@@ -367,8 +388,12 @@ Please delete all galfit ouputs! - (rm galfit.*)''')
         binary = 'galfit64'
     else:
         binary = 'galfit'
-    if os.system(args.galpath + binary + ' ' + gal_im + ' >/dev/null'):
-        raise Exception('Problem executing galfit / galfit64!')
+    ret=os.system(args.galpath + binary + " '" + gal_im + "' >/dev/null")
+    if ret:
+        if ret >> 8 == 139:
+            raise Exception('galfit segfaulted while executing: '+ args.galpath + binary + " '" + gal_im + "' >/dev/null" )
+        else:
+            raise Exception('Problem executing galfit / galfit64!')
 
     #Parse galfit output
     with open('galfit.01') as f:
@@ -398,55 +423,56 @@ Please delete all galfit ouputs! - (rm galfit.*)''')
     os.rename('galfit.01', obj_name + '_' + band + '.galfit')
 
 ### redshift correction
+with tee(obj_name + outfile_sufix) as f:
+    with redirect_stdout(f):
+        print("Galaxy:", obj_name)
+        if args.K and not np.isnan(redshift):
 
-print("Galaxy:", obj_name)
-if args.K and not np.isnan(redshift):
+            print("Mag_without_K-correction[Mag]:", 'g:' , "{:.4g}".format(magnitudes['g']), "r:", "{:.4g}".format(magnitudes['r']))
+        #    print("log10(M_withoutKkor*[Sun]):"      , "{:.4g}".format(0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996 ))
 
-    print("Mag_without_K-correction[Mag]:", 'g:' , "{:.4g}".format(magnitudes['g']), "r:", "{:.4g}".format(magnitudes['r']))
-#    print("log10(M_withoutKkor*[Sun]):"      , "{:.4g}".format(0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996 ))
+            M_ggr =  [
+                     [0,0,0,0],
+                     [-2.45204,4.10188,10.5258,-13.5889],
+                     [56.7969,-140.913,144.572,57.2155],
+                     [-466.949,222.789,-917.46,-78.0591],
+                     [2906.77,1500.8,1689.97,30.889],
+                     [-10453.7,-4419.56,-1011.01,0],
+                     [17568,3236.68,0,0],
+                     [-10820.7,0,0,0]]
 
-    M_ggr =  [
-             [0,0,0,0],
-             [-2.45204,4.10188,10.5258,-13.5889],
-             [56.7969,-140.913,144.572,57.2155],
-             [-466.949,222.789,-917.46,-78.0591],
-             [2906.77,1500.8,1689.97,30.889],
-             [-10453.7,-4419.56,-1011.01,0],
-             [17568,3236.68,0,0],
-             [-10820.7,0,0,0]]
+            M_rgr =  [
+                     [0,0,0,0],
+                     [1.83285,-2.71446,4.97336,-3.66864],
+                     [-19.7595,10.5033,18.8196,6.07785],
+                     [33.6059,-120.713,-49.299,0],
+                     [144.371,216.453,0,0],
+                     [-295.39,0,0,0]]
 
-    M_rgr =  [
-             [0,0,0,0],
-             [1.83285,-2.71446,4.97336,-3.66864],
-             [-19.7595,10.5033,18.8196,6.07785],
-             [33.6059,-120.713,-49.299,0],
-             [144.371,216.453,0,0],
-             [-295.39,0,0,0]]
-
-    z_g = 0
-    z_r = 0
-    color = magnitudes['g'] - magnitudes['r']
-    for _ in range(len(M_ggr)):
-        for __ in range(len(M_ggr[0]) ):
-            z_g += M_ggr[_][__] * redshift**_ * (color)**__
-    for _ in range(len(M_rgr)):
-        for __ in range(len(M_rgr[0]) ):
-            z_r += M_rgr[_][__] * redshift**_ * (color)**__
-    print('Applying K correction: g:', '{:.2g}'.format(z_g), 'r:','{:.2g}'.format(z_r))
-    magnitudes['g'] -= z_g
-    magnitudes['r'] -= z_r
+            z_g = 0
+            z_r = 0
+            color = magnitudes['g'] - magnitudes['r']
+            for _ in range(len(M_ggr)):
+                for __ in range(len(M_ggr[0]) ):
+                    z_g += M_ggr[_][__] * redshift**_ * (color)**__
+            for _ in range(len(M_rgr)):
+                for __ in range(len(M_rgr[0]) ):
+                    z_r += M_rgr[_][__] * redshift**_ * (color)**__
+            print('Applying K correction: g:', '{:.2g}'.format(z_g), 'r:','{:.2g}'.format(z_r))
+            magnitudes['g'] -= z_g
+            magnitudes['r'] -= z_r
 
 
-print("RA:", "{:4g}".format(center.ra.deg), "Dec:", "{:.4g}".format(center.dec.deg))
-print("log10(M*[Sun]):"      , "E:", "{:.4g}".format(0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996), "M:", "{:.4g}". format(0.582 * magnitudes['g'] - 1.023 * magnitudes['r'] + 0.992), "Q:", "{:.4g}".format(0.627 * magnitudes['g'] - 1.065 * magnitudes['r'] + 1.062) )
-print('Ext[mag]:'            , " ".join([band + ' : ' + "{:.4g}".format(ned[band])            for band in filters]))
-print('Mag[mag]:'            , " ".join([band + ' : ' + "{:.4g}".format(magnitudes[band])     for band in filters])) # after all the corrections!
-print('Sersic index:'        , " ".join([band + ' : ' + "{:.4g}".format(Ser_index[band])      for band in filters]))
-print('R_e[px]:'             , " ".join([band + ' : ' + "{:.4g}".format(R_e[band])            for band in filters]))
-print('R_e[arcsec]:'         , " ".join([band + ' : ' + "{:.4g}".format(R_e_arcsec[band])     for band in filters]))
-print('Axis ratio:'          , " ".join([band + ' : ' + "{:.4g}".format(axis_ratio[band])     for band in filters]))
-print('Position angle[deg]:' , " ".join([band + ' : ' + "{:.4g}".format(position_angle[band]) for band in filters]))
-print('Distance[Mpc]:', "{:4g}".format(dist), dist_type)
-print('Plate scale[arcsec / px]:', "{:.4g}".format(px_to_ang_dx), "{:.4g}".format(px_to_ang_dy))
-print('Zero point[mag]:', "{:.4g}".format(ZP))
-print('Redshift:', 'N/A' if np.isnan(redshift) else "{:4g}".format(redshift))
+        print("RA:", "{:4g}".format(center.ra.deg), "Dec:", "{:.4g}".format(center.dec.deg))
+        print("log10(M*[Sun]):"      , "E:", "{:.4g}".format(0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996), "M:", "{:.4g}". format(0.582 * magnitudes['g'] - 1.023 * magnitudes['r'] + 0.992), "Q:", "{:.4g}".format(0.627 * magnitudes['g'] - 1.065 * magnitudes['r'] + 1.062) )
+        print('Ext[mag]:'            , " ".join([band + ' : ' + "{:.4g}".format(ned[band])            for band in filters]))
+        print('Mag[mag]:'            , " ".join([band + ' : ' + "{:.4g}".format(magnitudes[band])     for band in filters])) # after all the corrections!
+        print('Sersic index:'        , " ".join([band + ' : ' + "{:.4g}".format(Ser_index[band])      for band in filters]))
+        print('R_e[px]:'             , " ".join([band + ' : ' + "{:.4g}".format(R_e[band])            for band in filters]))
+        print('R_e[arcsec]:'         , " ".join([band + ' : ' + "{:.4g}".format(R_e_arcsec[band])     for band in filters]))
+        print('Axis ratio:'          , " ".join([band + ' : ' + "{:.4g}".format(axis_ratio[band])     for band in filters]))
+        print('Position angle[deg]:' , " ".join([band + ' : ' + "{:.4g}".format(position_angle[band]) for band in filters]))
+        print('Distance[Mpc]:', "{:4g}".format(dist), dist_type)
+        print('Plate scale[arcsec / px]:', "{:.4g}".format(px_to_ang_dx), "{:.4g}".format(px_to_ang_dy))
+        print('Zero point[mag]:', "{:.4g}".format(ZP))
+        print('Redshift:', 'N/A' if np.isnan(redshift) else "{:4g}".format(redshift))

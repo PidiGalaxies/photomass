@@ -67,7 +67,7 @@ options:
   --redshift REDSHIFT   galaxy redshift - overrides the one dowloaded from NED
 ```
 
-The numerical outputs are printed to stdout. For example:
+The numerical outpus are printed to stdout and to `OBJECT_photomass.out`. For example:
 ```
 $./photomass_ls.py NGC474 106.3 --dist 30.88
 Downloading https://www.legacysurvey.org/viewer/fits-cutout?ra=20.02786271688&dec=3.41551721475&height=1024&width=1024&layer=ls-dr10&pixscale=0.524&bands=gr
@@ -88,7 +88,9 @@ Zero point[mag]: 20.99
 Redshift: 0.007722
 ```
 where:
-`Galaxy`: `OBJECT` (converted to upper case if no coordinates are specified)
+First two lines are outputed to `stderr`.
+
+`Galaxy`: `OBJECT` (converted to upper case if no coordinate are specified)
 
 `RA`, `Dec`: coordinates of the `OBJECT` in deg
 
