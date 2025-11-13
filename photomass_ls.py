@@ -9,6 +9,7 @@ import sep
 from scipy.ndimage import gaussian_filter
 import os
 import requests
+from urllib.parse import quote_plus
 
 from contextlib import redirect_stdout, contextmanager
 class _Tee:
@@ -76,7 +77,7 @@ def harvest_ned(_id):
         {'r': (float), 'z': (float), 'i': (float), 'redshift': (float)}
     '''
     oid = _id.encode('ascii')
-    x = requests.get('https://ned.ipac.caltech.edu/cgi-bin/gmd?uplist=' + oid.decode('ascii') + '&delimiter=bar&nondb=user_objname&position=z&SchEXT=DES+r&SchEXT=DES+g&SchEXT=DES+z')
+    x = requests.get('https://ned.ipac.caltech.edu/cgi-bin/gmd?uplist=' + quote_plus(oid.decode('ascii')) + '&delimiter=bar&nondb=user_objname&position=z&SchEXT=DES+r&SchEXT=DES+g&SchEXT=DES+z')
     data = [z for z in x.content.split(b'\n') if oid in z ]
     if len(data) == 0:
         raise(Exception("Failed to get data (galactic extinction and redshift) for object '"+ _id + "' from NED\n Try using options --coordinates and --dist (or --redshift)"))
@@ -154,6 +155,9 @@ else:
     obj_name =  args.OBJECT.upper() # Convert everything to upper case to avoid data duplication
     ned = harvest_ned(obj_name)
     center = get_icrs_coordinates(obj_name)
+
+for s in "[]: ":
+    obj_name = obj_name.replace(s, '')
 
 if 'dist' not in globals():
     if args.dist is None:

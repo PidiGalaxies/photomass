@@ -21,7 +21,7 @@ https://ui.adsabs.harvard.edu/abs/2025arXiv251002257E/abstract
 GALFIT : https://users.obs.carnegiescience.edu/peng/work/galfit/galfit.html
 
 python libraries:
-requests, numpy, scipy, SEP, astropy, [matplotlib (required for use of option `--plot`)]
+requests, urllib, numpy, scipy, SEP, astropy, [matplotlib (required for use of option `--plot`)]
 
 
 You can install required packages into virtual environment:
@@ -90,7 +90,7 @@ Redshift: 0.007722
 where:
 First two lines are outputed to `stderr`.
 
-`Galaxy`: `OBJECT` (converted to upper case if no coordinate are specified)
+`Galaxy`: `OBJECT` (converted to upper case if no coordinate are specified and stript of characters " []:")
 
 `RA`, `Dec`: coordinates of the `OBJECT` in deg
 
