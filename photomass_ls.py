@@ -434,6 +434,8 @@ with tee(obj_name + outfile_sufix) as f:
 
             print("Mag_without_K-correction[Mag]:", 'g:' , "{:.4g}".format(magnitudes['g']), "r:", "{:.4g}".format(magnitudes['r']))
         #    print("log10(M_withoutKkor*[Sun]):"      , "{:.4g}".format(0.673 * magnitudes['g'] - 1.108 * magnitudes['r'] + 0.996 ))
+            if redshift > 0.5:
+                print("The K-correction is valid only for redshift between 0 and 0.5, but target has redshift:", redshift , file=sys.stderr)
 
             M_ggr =  [
                      [0,0,0,0],
