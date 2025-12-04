@@ -57,7 +57,7 @@ options:
   -h, --help            show this help message and exit
   --refetch             re-download and re-analyse image even if a local copy exists
   --galpath GALPATH     path to galfit64 binary; if not set, $PATH is searched
-  --dist DIST           galaxy distance in Mcp
+  --dist DIST           galaxy distance in Mpc
   --coordinates COORDINATES
                         comma seperated coordinates: RA,DEC with unints (default units are deg); requires --dist
   --additional-filters ADDITIONAL_FILTERS
