@@ -105,7 +105,7 @@ parser.add_argument("OBJECT", help="name of the galaxy for which the stellar mas
 parser.add_argument("radius", help="approximate galaxy angular size in arcseconds (e.g. semi-major axis at SB=25.5mag/arcsec^2 in the Spitzer 3.6 micron filter)", type=float)
 parser.add_argument("--refetch", help="re-download and re-analyse image even if a local copy exists", action="store_true")
 parser.add_argument("--galpath", help="path to galfit(64) binary; if not set, $PATH is searched", action="store", default="")
-parser.add_argument("--dist", help="galaxy distance in Mcp", action="store", default=None)
+parser.add_argument("--dist", help="galaxy distance in Mpc", action="store", default=None)
 parser.add_argument("--coordinates", help="comma seperated coordinates: RA,DEC with unints (default units are deg); requires --dist", action="store", default=None)
 parser.add_argument("--additional-filters", help="other filters without delimiter (e.g. 'zi')", action="store", default='')
 parser.add_argument("--plot", help="plot png image of source data and masked data", action="store_true")
